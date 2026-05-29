@@ -96,3 +96,47 @@ export function toHexSafe(input: string): string {
   if (!parsed) return input;
   return formatHex(parsed) ?? input;
 }
+
+// Below this OKLCH chroma a color reads as greyscale/neutral and has no
+// meaningful hue, so it's sorted ahead of the chromatic colors.
+const ACHROMATIC_CHROMA_THRESHOLD = 0.03;
+
+interface PaletteSortKey {
+  achromatic: boolean;
+  lightness: number;
+  hue: number;
+}
+
+function paletteSortKey(baseColor: string): PaletteSortKey {
+  const oklch = parseColor(baseColor);
+  // Treat an unparseable color as a dark neutral so it sorts predictably.
+  if (!oklch) return { achromatic: true, lightness: 0, hue: 0 };
+  const chroma = oklch.c ?? 0;
+  return {
+    achromatic: chroma < ACHROMATIC_CHROMA_THRESHOLD,
+    lightness: oklch.l ?? 0,
+    hue: oklch.h ?? 0,
+  };
+}
+
+/**
+ * Sort palettes by their base color around the hue wheel: greyscale/neutral
+ * colors first (lightest to darkest), then chromatic colors by ascending
+ * OKLCH hue (red → orange → yellow → green → cyan → blue → violet). Name is
+ * the tie-breaker so the order is stable. Returns a new array.
+ */
+export function sortPalettesByColor<T extends { baseColor: string; name: string }>(
+  palettes: T[],
+): T[] {
+  return [...palettes].sort((a, b) => {
+    const ka = paletteSortKey(a.baseColor);
+    const kb = paletteSortKey(b.baseColor);
+    if (ka.achromatic !== kb.achromatic) return ka.achromatic ? -1 : 1;
+    if (ka.achromatic) {
+      if (kb.lightness !== ka.lightness) return kb.lightness - ka.lightness;
+    } else if (ka.hue !== kb.hue) {
+      return ka.hue - kb.hue;
+    }
+    return a.name.localeCompare(b.name);
+  });
+}

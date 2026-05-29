@@ -12,7 +12,7 @@ import {
   type TokenState,
   type TypographyTokens,
 } from '@/types/tokens';
-import { generateScale, resolveScale } from '@/lib/colorScale';
+import { generateScale, resolveScale, sortPalettesByColor } from '@/lib/colorScale';
 import { SXC1_PRESET, SXC1_SEMANTIC_PICKS } from '@/constants/sxc1Preset';
 
 const DEFAULT_TYPOGRAPHY: TypographyTokens = {
@@ -156,13 +156,15 @@ function buildSxc1State(prev: TokenState): TokenState {
   const semantic = buildDefaultSemantics([brand, neutral, destructive]);
   return {
     ...prev,
-    palettes,
+    palettes: sortPalettesByColor(palettes),
     semantic,
   };
 }
 
 const INITIAL_STATE: TokenState = {
-  palettes: DEFAULT_PALETTES,
+  // Semantics are built from DEFAULT_PALETTES by index above; the stored array
+  // is sorted by color (references are by id, so resolution is unaffected).
+  palettes: sortPalettesByColor(DEFAULT_PALETTES),
   semantic: DEFAULT_SEMANTICS,
   typography: DEFAULT_TYPOGRAPHY,
   spacing: DEFAULT_SPACING,
@@ -213,7 +215,10 @@ export const useTokenStore = create<TokenStore>()(
 
       addPalette: (name, baseColor) =>
         set((state) => ({
-          palettes: [...state.palettes, buildPalette(name, baseColor)],
+          palettes: sortPalettesByColor([
+            ...state.palettes,
+            buildPalette(name, baseColor),
+          ]),
         })),
 
       removePalette: (id) =>
@@ -232,14 +237,16 @@ export const useTokenStore = create<TokenStore>()(
 
       setPaletteBaseColor: (id, baseColor) =>
         set((state) => ({
-          palettes: state.palettes.map((p) =>
-            p.id === id
-              ? {
-                  ...p,
-                  baseColor,
-                  scale: resolveScale(baseColor, p.overrides),
-                }
-              : p,
+          palettes: sortPalettesByColor(
+            state.palettes.map((p) =>
+              p.id === id
+                ? {
+                    ...p,
+                    baseColor,
+                    scale: resolveScale(baseColor, p.overrides),
+                  }
+                : p,
+            ),
           ),
         })),
 
@@ -367,7 +374,15 @@ export const useTokenStore = create<TokenStore>()(
     }),
     {
       name: 'design-token-selector',
-      version: 1,
+      version: 2,
+      // v2 sorts palettes by color; re-sort any state persisted under v1.
+      migrate: (persisted, _version) => {
+        const state = persisted as Partial<TokenState> | undefined;
+        if (state && Array.isArray(state.palettes)) {
+          state.palettes = sortPalettesByColor(state.palettes);
+        }
+        return state as TokenStore;
+      },
     },
   ),
 );

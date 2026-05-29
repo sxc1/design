@@ -19,3 +19,8 @@ yarn-error.log*
 *.tsbuildinfo
 designTester/vite.config.js
 designTester/vite.config.d.ts
+
+# AI Tools
+CLAUDE.md
+.claude/*
+.cursor/*
