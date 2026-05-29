@@ -99,7 +99,7 @@ export function toHexSafe(input: string): string {
 
 // Below this OKLCH chroma a color reads as greyscale/neutral and has no
 // meaningful hue, so it's sorted ahead of the chromatic colors.
-const ACHROMATIC_CHROMA_THRESHOLD = 0.03;
+const ACHROMATIC_CHROMA_THRESHOLD = 0.05;
 
 interface PaletteSortKey {
   achromatic: boolean;
