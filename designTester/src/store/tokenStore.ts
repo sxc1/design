@@ -169,6 +169,7 @@ const INITIAL_STATE: TokenState = {
   typography: DEFAULT_TYPOGRAPHY,
   spacing: DEFAULT_SPACING,
   previewMode: 'light',
+  previewScreen: 'dashboard',
 };
 
 export interface TokenActions {
@@ -202,6 +203,7 @@ export interface TokenActions {
   removeSpacing: (key: string) => void;
 
   setPreviewMode: (mode: PreviewMode) => void;
+  setPreviewScreen: (id: string) => void;
   resetAll: () => void;
   loadSxc1Preset: () => void;
 }
@@ -367,6 +369,8 @@ export const useTokenStore = create<TokenStore>()(
         }),
 
       setPreviewMode: (mode) => set({ previewMode: mode }),
+
+      setPreviewScreen: (id) => set({ previewScreen: id }),
 
       resetAll: () => set({ ...INITIAL_STATE }),
 

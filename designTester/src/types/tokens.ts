@@ -65,4 +65,6 @@ export interface TokenState {
   typography: TypographyTokens;
   spacing: SpacingTokens;
   previewMode: PreviewMode;
+  /** id of the active preview screen (see preview/screens/registry). */
+  previewScreen: string;
 }

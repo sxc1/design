@@ -6,7 +6,8 @@ import { SemanticColorPanel } from '@/components/tokens/SemanticColorPanel';
 import { TypographyPanel } from '@/components/tokens/TypographyPanel';
 import { SpacingPanel } from '@/components/tokens/SpacingPanel';
 import { PreviewWrapper } from '@/components/preview/PreviewWrapper';
-import { MockPage } from '@/components/preview/MockPage';
+import { PreviewNav } from '@/components/preview/PreviewNav';
+import { getScreen } from '@/components/preview/screens/registry';
 import { Button } from '@/components/ui/Button';
 import { ModeToggle } from '@/components/preview/ModeToggle';
 import { useTokenStore } from '@/store/tokenStore';
@@ -16,6 +17,8 @@ export function AppShell() {
   const [activeTab, setActiveTab] = useState<TabId>('primitive');
   const resetAll = useTokenStore((s) => s.resetAll);
   const loadSxc1Preset = useTokenStore((s) => s.loadSxc1Preset);
+  const previewScreen = useTokenStore((s) => s.previewScreen);
+  const ActiveScreen = getScreen(previewScreen).component;
 
   function handleExport() {
     const state = useTokenStore.getState();
@@ -73,7 +76,8 @@ export function AppShell() {
 
         <section className="min-h-0">
           <PreviewWrapper>
-            <MockPage />
+            <PreviewNav />
+            <ActiveScreen />
           </PreviewWrapper>
         </section>
       </div>
