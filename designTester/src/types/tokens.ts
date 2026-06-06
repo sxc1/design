@@ -4,6 +4,13 @@ export const SHADE_STEPS = [
 
 export type ShadeStep = (typeof SHADE_STEPS)[number];
 
+/**
+ * A semantic role can point at one of the generated 50…950 shades or at the
+ * palette's raw base color (the source color the scale is derived from).
+ */
+export const BASE_SHADE = 'base' as const;
+export type ShadeRef = ShadeStep | typeof BASE_SHADE;
+
 export type ShadeScale = Record<ShadeStep, string>;
 
 export interface PrimitivePalette {
@@ -35,7 +42,7 @@ export type SemanticRoleId =
 
 export interface SemanticReference {
   paletteId: string;
-  shade: ShadeStep;
+  shade: ShadeRef;
 }
 
 export type SemanticMap = Partial<Record<SemanticRoleId, SemanticReference>>;

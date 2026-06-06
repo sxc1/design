@@ -1,6 +1,13 @@
 import { converter, formatHex, parse } from 'culori';
 import type { Oklch } from 'culori';
-import { SHADE_STEPS, type ShadeScale, type ShadeStep } from '@/types/tokens';
+import {
+  BASE_SHADE,
+  SHADE_STEPS,
+  type PrimitivePalette,
+  type ShadeRef,
+  type ShadeScale,
+  type ShadeStep,
+} from '@/types/tokens';
 
 const toOklch = converter('oklch');
 
@@ -95,6 +102,32 @@ export function toHexSafe(input: string): string {
   const parsed = parseColor(input);
   if (!parsed) return input;
   return formatHex(parsed) ?? input;
+}
+
+export interface ShadeEntry {
+  shade: ShadeRef;
+  color: string;
+}
+
+/**
+ * The palette's swatches — the 50…950 shades plus the raw base color — ordered
+ * lightest to darkest by OKLCH lightness. Because the generated scale is
+ * monotonic in lightness, the numeric steps keep their 50→950 order and the
+ * base color slots in wherever its own lightness falls.
+ */
+export function paletteShadeEntries(palette: PrimitivePalette): ShadeEntry[] {
+  const entries: (ShadeEntry & { l: number })[] = SHADE_STEPS.map((step) => ({
+    shade: step,
+    color: palette.scale[step],
+    l: parseColor(palette.scale[step])?.l ?? 0,
+  }));
+  entries.push({
+    shade: BASE_SHADE,
+    color: toHexSafe(palette.baseColor),
+    l: parseColor(palette.baseColor)?.l ?? 0,
+  });
+  entries.sort((a, b) => b.l - a.l);
+  return entries.map(({ shade, color }) => ({ shade, color }));
 }
 
 // Below this OKLCH chroma a color reads as greyscale/neutral and has no

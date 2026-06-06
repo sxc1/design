@@ -13,8 +13,9 @@ import {
   type PreviewMode,
   type PrimitivePalette,
   type SemanticRoleId,
-  type ShadeStep,
+  type ShadeRef,
 } from '@/types/tokens';
+import { paletteShadeEntries } from '@/lib/colorScale';
 import { contrastRatio, gradeContrast } from '@/lib/contrastCheck';
 
 export function SemanticColorPanel() {
@@ -116,6 +117,7 @@ function SemanticRow({
         <ShadeSelect
           disabled={!reference?.paletteId}
           value={reference?.shade ?? 500}
+          palette={selectedPalette}
           onChange={(shade) => {
             if (!reference?.paletteId) return;
             setSemantic(mode, role.id, { paletteId: reference.paletteId, shade });
@@ -171,23 +173,24 @@ function PaletteShadeStrip({
   onPick,
 }: {
   palette: PrimitivePalette;
-  activeShade: ShadeStep | undefined;
-  onPick: (shade: ShadeStep) => void;
+  activeShade: ShadeRef | undefined;
+  onPick: (shade: ShadeRef) => void;
 }) {
+  const entries = paletteShadeEntries(palette);
   return (
     <div className="mt-2 ml-12 rounded-md border border-app-border bg-app-bg p-2">
       <div className="mb-1 text-[11px] font-medium text-app-muted">
         {palette.name} scale — click a shade to assign
       </div>
-      <div className="grid grid-cols-11 gap-1">
-        {SHADE_STEPS.map((step) => {
-          const isActive = step === activeShade;
+      <div className="grid grid-cols-12 gap-1">
+        {entries.map(({ shade, color }) => {
+          const isActive = shade === activeShade;
           return (
             <button
-              key={step}
+              key={shade}
               type="button"
-              onClick={() => onPick(step)}
-              title={`${palette.name}.${step} · ${palette.scale[step]}`}
+              onClick={() => onPick(shade)}
+              title={`${palette.name}.${shade} · ${color}`}
               className={[
                 'group flex flex-col items-stretch gap-0.5 rounded-sm transition',
                 isActive
@@ -197,10 +200,10 @@ function PaletteShadeStrip({
             >
               <span
                 className="block h-8 w-full rounded-sm border border-app-border shadow-sm"
-                style={{ background: palette.scale[step] }}
+                style={{ background: color }}
               />
               <span className="text-center text-[10px] font-medium text-app-muted group-hover:text-app-fg">
-                {step}
+                {shade}
               </span>
             </button>
           );
@@ -239,20 +242,29 @@ function ShadeSelect({
   value,
   onChange,
   disabled,
+  palette,
 }: {
-  value: ShadeStep;
-  onChange: (s: ShadeStep) => void;
+  value: ShadeRef;
+  onChange: (s: ShadeRef) => void;
   disabled?: boolean;
+  palette?: PrimitivePalette;
 }) {
+  // With a palette selected, offer the base color slotted in by lightness;
+  // otherwise fall back to the bare 50…950 steps.
+  const options: ShadeRef[] = palette
+    ? paletteShadeEntries(palette).map((e) => e.shade)
+    : [...SHADE_STEPS];
   return (
     <select
       disabled={disabled}
-      value={value}
-      onChange={(e) => onChange(Number(e.target.value) as ShadeStep)}
+      value={String(value)}
+      onChange={(e) =>
+        onChange(e.target.value === 'base' ? 'base' : (Number(e.target.value) as ShadeRef))
+      }
       className="rounded-md border border-app-border bg-app-surface px-2 py-1 text-sm text-app-fg disabled:opacity-50"
     >
-      {SHADE_STEPS.map((s) => (
-        <option key={s} value={s}>
+      {options.map((s) => (
+        <option key={s} value={String(s)}>
           {s}
         </option>
       ))}

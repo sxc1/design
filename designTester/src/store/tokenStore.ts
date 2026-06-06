@@ -12,7 +12,12 @@ import {
   type TokenState,
   type TypographyTokens,
 } from '@/types/tokens';
-import { generateScale, resolveScale, sortPalettesByColor } from '@/lib/colorScale';
+import {
+  generateScale,
+  resolveScale,
+  sortPalettesByColor,
+  toHexSafe,
+} from '@/lib/colorScale';
 import { SXC1_PRESET, SXC1_SEMANTIC_PICKS } from '@/constants/sxc1Preset';
 
 const DEFAULT_TYPOGRAPHY: TypographyTokens = {
@@ -409,6 +414,7 @@ export function resolveSemanticColor(
   if (!reference) return null;
   const palette = palettes.find((p) => p.id === reference.paletteId);
   if (!palette) return null;
+  if (reference.shade === 'base') return toHexSafe(palette.baseColor);
   return palette.scale[reference.shade] ?? null;
 }
 
