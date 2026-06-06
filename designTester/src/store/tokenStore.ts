@@ -19,6 +19,7 @@ import {
   toHexSafe,
 } from '@/lib/colorScale';
 import { SXC1_PRESET, SXC1_SEMANTIC_PICKS } from '@/constants/sxc1Preset';
+import { importCssTokens, type ImportSummary } from '@/lib/importCss';
 
 const DEFAULT_TYPOGRAPHY: TypographyTokens = {
   fontFamilySans:
@@ -211,13 +212,14 @@ export interface TokenActions {
   setPreviewScreen: (id: string) => void;
   resetAll: () => void;
   loadSxc1Preset: () => void;
+  importFromCss: (css: string) => ImportSummary | null;
 }
 
 export type TokenStore = TokenState & TokenActions;
 
 export const useTokenStore = create<TokenStore>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       ...INITIAL_STATE,
 
       addPalette: (name, baseColor) =>
@@ -380,6 +382,13 @@ export const useTokenStore = create<TokenStore>()(
       resetAll: () => set({ ...INITIAL_STATE }),
 
       loadSxc1Preset: () => set((state) => buildSxc1State(state)),
+
+      importFromCss: (css) => {
+        const result = importCssTokens(css, get());
+        if (!result) return null;
+        set(result.patch);
+        return result.summary;
+      },
     }),
     {
       name: 'design-token-selector',

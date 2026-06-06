@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { saveAs } from 'file-saver';
 import { TabNav, type TabId } from './TabNav';
 import { PrimitiveColorPanel } from '@/components/tokens/PrimitiveColorPanel';
@@ -17,8 +17,41 @@ export function AppShell() {
   const [activeTab, setActiveTab] = useState<TabId>('primitive');
   const resetAll = useTokenStore((s) => s.resetAll);
   const loadSxc1Preset = useTokenStore((s) => s.loadSxc1Preset);
+  const importFromCss = useTokenStore((s) => s.importFromCss);
   const previewScreen = useTokenStore((s) => s.previewScreen);
   const ActiveScreen = getScreen(previewScreen).component;
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [importStatus, setImportStatus] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!importStatus) return;
+    const t = window.setTimeout(() => setImportStatus(null), 5000);
+    return () => window.clearTimeout(t);
+  }, [importStatus]);
+
+  async function handleImportFile(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+    if (!file) return;
+    const css = await file.text();
+    const summary = importFromCss(css);
+    if (!summary) {
+      setImportStatus('No design tokens found in that CSS file.');
+      return;
+    }
+    const parts: string[] = [];
+    if (summary.hasPrimitives) {
+      parts.push(`${summary.paletteCount} palette${summary.paletteCount === 1 ? '' : 's'}`);
+    }
+    if (summary.hasSemantics) {
+      parts.push(`${summary.lightRoleCount} light / ${summary.darkRoleCount} dark roles`);
+    }
+    if (summary.synthesizedCount > 0) {
+      parts.push(`${summary.synthesizedCount} synthesized`);
+    }
+    setImportStatus(`Imported ${parts.join(', ')}.`);
+  }
 
   function handleExport() {
     const state = useTokenStore.getState();
@@ -51,11 +84,30 @@ export function AppShell() {
           <ModeToggle />
         </div>
         <div className="flex items-center justify-end gap-2">
+          {importStatus ? (
+            <span className="text-xs text-app-muted" role="status">
+              {importStatus}
+            </span>
+          ) : null}
           <Button variant="ghost" size="sm" onClick={resetAll}>
             Reset
           </Button>
           <Button variant="ghost" size="sm" onClick={loadSxc1Preset}>
             sxc1
+          </Button>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".css,text/css"
+            className="hidden"
+            onChange={handleImportFile}
+          />
+          <Button
+            variant="secondary"
+            size="md"
+            onClick={() => fileInputRef.current?.click()}
+          >
+            Import CSS
           </Button>
           <Button variant="primary" size="md" onClick={handleExport}>
             Export Tailwind Config
