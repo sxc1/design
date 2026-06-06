@@ -15,7 +15,8 @@ import { exportTailwindV3 } from '@/lib/exportTailwindV3';
 
 export function AppShell() {
   const [activeTab, setActiveTab] = useState<TabId>('primitive');
-  const resetAll = useTokenStore((s) => s.resetAll);
+  const clearAll = useTokenStore((s) => s.clearAll);
+  const loadBasicPreset = useTokenStore((s) => s.loadBasicPreset);
   const loadSxc1Preset = useTokenStore((s) => s.loadSxc1Preset);
   const importFromCss = useTokenStore((s) => s.importFromCss);
   const previewScreen = useTokenStore((s) => s.previewScreen);
@@ -89,12 +90,18 @@ export function AppShell() {
               {importStatus}
             </span>
           ) : null}
-          <Button variant="ghost" size="sm" onClick={resetAll}>
-            Reset
-          </Button>
-          <Button variant="ghost" size="sm" onClick={loadSxc1Preset}>
-            sxc1
-          </Button>
+          <div className="flex items-center gap-2 rounded-lg border border-app-border bg-app-bg px-2.5 py-1.5">
+            <span className="text-xs font-medium text-app-muted">Theme</span>
+            <Button variant="ghost" size="sm" onClick={clearAll}>
+              Clear
+            </Button>
+            <Button variant="ghost" size="sm" onClick={loadBasicPreset}>
+              Basic
+            </Button>
+            <Button variant="ghost" size="sm" onClick={loadSxc1Preset}>
+              sxc1
+            </Button>
+          </div>
           <input
             ref={fileInputRef}
             type="file"

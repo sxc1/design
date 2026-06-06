@@ -151,19 +151,36 @@ function buildDefaultSemantics(palettes: PrimitivePalette[]): {
 
 const DEFAULT_SEMANTICS = buildDefaultSemantics(DEFAULT_PALETTES);
 
+// Merge a preset's palettes into the existing set without dropping any: an
+// existing palette with the same name is reused as-is, missing ones are added.
+// Returns the merged list plus a name→palette lookup for seeding semantics.
+function mergePresetPalettes(
+  existing: PrimitivePalette[],
+  entries: { name: string; baseColor: string }[],
+): { palettes: PrimitivePalette[]; byName: Map<string, PrimitivePalette> } {
+  const byName = new Map(existing.map((p) => [p.name, p]));
+  const added: PrimitivePalette[] = [];
+  for (const entry of entries) {
+    if (byName.has(entry.name)) continue;
+    const palette = buildPalette(entry.name, entry.baseColor);
+    byName.set(palette.name, palette);
+    added.push(palette);
+  }
+  return {
+    palettes: sortPalettesByColor([...existing, ...added]),
+    byName,
+  };
+}
+
 function buildSxc1State(prev: TokenState): TokenState {
-  const palettes = SXC1_PRESET.map((entry) =>
-    buildPalette(entry.name, entry.baseColor),
-  );
-  const byName = new Map(palettes.map((p) => [p.name, p]));
+  const { palettes, byName } = mergePresetPalettes(prev.palettes, SXC1_PRESET);
   const brand = byName.get(SXC1_SEMANTIC_PICKS.brand)!;
   const neutral = byName.get(SXC1_SEMANTIC_PICKS.neutral)!;
   const destructive = byName.get(SXC1_SEMANTIC_PICKS.destructive)!;
-  const semantic = buildDefaultSemantics([brand, neutral, destructive]);
   return {
     ...prev,
-    palettes: sortPalettesByColor(palettes),
-    semantic,
+    palettes,
+    semantic: buildDefaultSemantics([brand, neutral, destructive]),
   };
 }
 
@@ -210,7 +227,8 @@ export interface TokenActions {
 
   setPreviewMode: (mode: PreviewMode) => void;
   setPreviewScreen: (id: string) => void;
-  resetAll: () => void;
+  clearAll: () => void;
+  loadBasicPreset: () => void;
   loadSxc1Preset: () => void;
   importFromCss: (css: string) => ImportSummary | null;
 }
@@ -379,7 +397,27 @@ export const useTokenStore = create<TokenStore>()(
 
       setPreviewScreen: (id) => set({ previewScreen: id }),
 
-      resetAll: () => set({ ...INITIAL_STATE }),
+      clearAll: () =>
+        set({
+          palettes: [],
+          semantic: { light: {}, dark: {} },
+          previewMode: INITIAL_STATE.previewMode,
+          previewScreen: INITIAL_STATE.previewScreen,
+        }),
+
+      loadBasicPreset: () =>
+        set((state) => {
+          const { palettes, byName } = mergePresetPalettes(
+            state.palettes,
+            DEFAULT_PALETTES,
+          );
+          const basics = DEFAULT_PALETTES.map((p) => byName.get(p.name)!);
+          return {
+            ...state,
+            palettes,
+            semantic: buildDefaultSemantics(basics),
+          };
+        }),
 
       loadSxc1Preset: () => set((state) => buildSxc1State(state)),
 
