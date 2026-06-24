@@ -201,8 +201,8 @@ export function AntShowcase() {
         ))}
       </div>
 
-      {/* Timeline */}
-      <div className="mt-[var(--ds-space-5,1.25rem)]">
+      {/* Activity + Notifications */}
+      <div className="mt-[var(--ds-space-5,1.25rem)] grid grid-cols-1 gap-[var(--ds-space-5,1.25rem)] md:grid-cols-2">
         <ACard title="Activity">
           <ol>
             {TIMELINE.map((item, i) => (
@@ -236,10 +236,7 @@ export function AntShowcase() {
             ))}
           </ol>
         </ACard>
-      </div>
 
-      {/* Alerts + Tabs */}
-      <div className="mt-[var(--ds-space-5,1.25rem)]">
         <ACard title="Notifications & Tabs">
           <div className="flex flex-col gap-[var(--ds-space-2,0.5rem)]">
             {ALERTS.map((a) => (
@@ -252,12 +249,11 @@ export function AntShowcase() {
         </ACard>
       </div>
 
-      {/* Progress: circle + line */}
-      <div className="mt-[var(--ds-space-5,1.25rem)]">
+      {/* Progress + Create instance */}
+      <div className="mt-[var(--ds-space-5,1.25rem)] grid grid-cols-1 gap-[var(--ds-space-5,1.25rem)] md:grid-cols-2">
         <ACard title="Progress">
           <div className="flex flex-wrap items-center gap-[var(--ds-space-6,1.5rem)]">
             <CircleProgress percent={75} />
-            <CircleProgress percent={42} />
             <div className="min-w-[12rem] flex-1">
               <LineProgress percent={66} />
               <div className="mt-[var(--ds-space-4,1rem)]">
@@ -266,10 +262,7 @@ export function AntShowcase() {
             </div>
           </div>
         </ACard>
-      </div>
 
-      {/* Form with right-aligned labels */}
-      <div className="mt-[var(--ds-space-5,1.25rem)]">
         <ACard title="Create instance">
           <form className="flex flex-col gap-[var(--ds-space-3,0.75rem)]">
             <FormRow label="Name">
