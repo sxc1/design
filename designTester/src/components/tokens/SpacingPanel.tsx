@@ -15,6 +15,9 @@ export function SpacingPanel() {
 
   return (
     <div className="flex flex-col gap-5">
+      <div className="rounded-lg border border-red-500/40 bg-red-500/10 px-3 py-2 text-xs font-medium text-red-600 dark:text-red-400">
+        Warning: this section is a work in progress
+      </div>
       <section className="rounded-lg border border-app-border bg-app-surface p-4">
         <h3 className="mb-3 text-sm font-semibold text-app-fg">Base unit</h3>
         <Field label="Base unit (px)" hint="Reference for scale design. Does not auto-adjust values below.">
