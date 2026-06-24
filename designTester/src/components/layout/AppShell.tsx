@@ -21,6 +21,7 @@ export function AppShell() {
   const importFromCss = useTokenStore((s) => s.importFromCss);
   const previewScreen = useTokenStore((s) => s.previewScreen);
   const ActiveScreen = getScreen(previewScreen).component;
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [importStatus, setImportStatus] = useState<string | null>(null);
@@ -71,7 +72,29 @@ export function AppShell() {
     <div className="grid h-full grid-rows-[auto_1fr] bg-app-bg text-app-fg">
       <header className="grid grid-cols-[1fr_auto_1fr] items-center gap-4 border-b border-app-border bg-app-surface px-4 py-2.5">
         <div className="flex items-center gap-3">
-          <div className="h-7 w-7 rounded-md bg-app-accent" />
+          <button
+            type="button"
+            onClick={() => setSidebarCollapsed((v) => !v)}
+            aria-label={sidebarCollapsed ? 'Expand token editor' : 'Collapse token editor'}
+            aria-expanded={!sidebarCollapsed}
+            title={sidebarCollapsed ? 'Expand token editor' : 'Collapse token editor'}
+            className="flex h-7 w-7 items-center justify-center rounded-md bg-app-accent text-white transition-opacity hover:opacity-85 focus:outline-none focus-visible:ring-2 focus-visible:ring-app-accent focus-visible:ring-offset-2 focus-visible:ring-offset-app-surface"
+          >
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={2.25}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className={`h-4 w-4 transition-transform duration-300 ${
+                sidebarCollapsed ? 'rotate-180' : ''
+              }`}
+              aria-hidden="true"
+            >
+              <path d="M15 6l-6 6 6 6" />
+            </svg>
+          </button>
           <div>
             <h1 className="text-sm font-semibold leading-tight">
               Design Token Selector
@@ -122,18 +145,24 @@ export function AppShell() {
         </div>
       </header>
 
-      <div className="grid min-h-0 grid-cols-[minmax(420px,1fr)_minmax(0,1.4fr)]">
-        <aside className="flex min-h-0 flex-col border-r border-app-border bg-app-bg">
-          <TabNav active={activeTab} onChange={setActiveTab} />
-          <div className="min-h-0 flex-1 overflow-auto p-4">
-            {activeTab === 'primitive' ? <PrimitiveColorPanel /> : null}
-            {activeTab === 'semantic' ? <SemanticColorPanel /> : null}
-            {activeTab === 'typography' ? <TypographyPanel /> : null}
-            {activeTab === 'spacing' ? <SpacingPanel /> : null}
+      <div className="flex min-h-0">
+        <aside
+          className={`min-h-0 shrink-0 overflow-hidden border-app-border bg-app-bg transition-[width] duration-300 ease-in-out ${
+            sidebarCollapsed ? 'w-0 border-r-0' : 'w-[max(420px,42%)] border-r'
+          }`}
+        >
+          <div className="flex h-full w-full min-w-[420px] flex-col">
+            <TabNav active={activeTab} onChange={setActiveTab} />
+            <div className="min-h-0 flex-1 overflow-auto p-4">
+              {activeTab === 'primitive' ? <PrimitiveColorPanel /> : null}
+              {activeTab === 'semantic' ? <SemanticColorPanel /> : null}
+              {activeTab === 'typography' ? <TypographyPanel /> : null}
+              {activeTab === 'spacing' ? <SpacingPanel /> : null}
+            </div>
           </div>
         </aside>
 
-        <section className="min-h-0">
+        <section className="min-h-0 min-w-0 flex-1">
           <PreviewWrapper>
             <PreviewNav />
             <ActiveScreen />
