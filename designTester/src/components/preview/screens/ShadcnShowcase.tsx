@@ -24,7 +24,15 @@ export function ShadcnShowcase() {
             color: 'rgb(var(--ds-muted-foreground))',
           }}
         >
-          Subtle borders, muted surfaces, restrained radius — the shadcn idiom.
+          Subtle borders, muted surfaces, restrained radius — the shadcn idiom.{' '}
+          <a
+            href="https://ui.shadcn.com/"
+            target="_blank"
+            rel="noreferrer"
+            style={{ color: 'rgb(var(--ds-primary))', textDecoration: 'underline' }}
+          >
+            Learn more
+          </a>
         </p>
       </header>
 
