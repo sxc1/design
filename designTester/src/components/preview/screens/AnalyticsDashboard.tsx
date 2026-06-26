@@ -5,8 +5,21 @@ const STATS = [
   { label: 'Churn', value: '1.2%', delta: '-0.3%', up: true },
 ];
 
-const BARS = [42, 58, 35, 70, 64, 88, 76, 95, 62, 80, 90, 100];
-const MONTHS = ['J', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N', 'D'];
+const REVENUE = [
+  { month: 'Jan', value: 28400 },
+  { month: 'Feb', value: 31200 },
+  { month: 'Mar', value: 29800 },
+  { month: 'Apr', value: 35100 },
+  { month: 'May', value: 38600 },
+  { month: 'Jun', value: 36400 },
+  { month: 'Jul', value: 41200 },
+  { month: 'Aug', value: 44300 },
+  { month: 'Sep', value: 42800 },
+  { month: 'Oct', value: 46900 },
+  { month: 'Nov', value: 45700 },
+  { month: 'Dec', value: 48210 },
+];
+const REVENUE_MAX = Math.max(...REVENUE.map((d) => d.value));
 
 const ACTIVITY = [
   { who: 'Ava Thompson', action: 'Upgraded to Pro', when: '2m ago', amount: '$49' },
@@ -173,37 +186,54 @@ function ChartCard() {
         boxShadow: 'var(--ds-elev-raised)',
       }}
     >
-      <div
-        className="mb-[var(--ds-space-3,0.75rem)]"
-        style={{
-          fontSize: 'var(--ds-text-sm, 0.875rem)',
-          fontWeight: 'var(--ds-weight-semibold, 600)',
-        }}
-      >
-        Monthly revenue
+      <div className="mb-[var(--ds-space-3,0.75rem)] flex items-baseline justify-between">
+        <span
+          style={{
+            fontSize: 'var(--ds-text-sm, 0.875rem)',
+            fontWeight: 'var(--ds-weight-semibold, 600)',
+          }}
+        >
+          Monthly revenue
+        </span>
+        <span
+          style={{
+            fontSize: 'var(--ds-text-xs, 0.75rem)',
+            color: 'rgb(var(--ds-muted-foreground))',
+          }}
+        >
+          Peak ${(REVENUE_MAX / 1000).toFixed(1)}k · 2025
+        </span>
       </div>
+      {/* bars (heights resolve against this fixed-height row) */}
       <div className="flex h-44 items-end gap-[var(--ds-space-2,0.5rem)]">
-        {BARS.map((h, i) => (
-          <div key={i} className="flex flex-1 flex-col items-center gap-[var(--ds-space-1,0.25rem)]">
-            <div
-              className="w-full rounded-t-[var(--ds-radius-sm,0.25rem)]"
-              style={{
-                height: `${h}%`,
-                background:
-                  i === BARS.length - 1
-                    ? 'rgb(var(--ds-primary))'
-                    : 'rgb(var(--ds-accent))',
-              }}
-            />
-            <span
-              style={{
-                fontSize: 'var(--ds-text-xs, 0.75rem)',
-                color: 'rgb(var(--ds-muted-foreground))',
-              }}
-            >
-              {MONTHS[i]}
-            </span>
-          </div>
+        {REVENUE.map((d, i) => (
+          <div
+            key={d.month}
+            className="flex-1 rounded-t-[var(--ds-radius-sm,0.25rem)] transition-[height]"
+            style={{
+              height: `${(d.value / REVENUE_MAX) * 100}%`,
+              background:
+                i === REVENUE.length - 1
+                  ? 'rgb(var(--ds-primary))'
+                  : 'rgb(var(--ds-accent))',
+            }}
+            title={`${d.month}: $${d.value.toLocaleString()}`}
+          />
+        ))}
+      </div>
+      {/* month labels mirror the bar layout for alignment */}
+      <div className="mt-[var(--ds-space-1,0.25rem)] flex gap-[var(--ds-space-2,0.5rem)]">
+        {REVENUE.map((d) => (
+          <span
+            key={d.month}
+            className="flex-1 text-center"
+            style={{
+              fontSize: 'var(--ds-text-xs, 0.75rem)',
+              color: 'rgb(var(--ds-muted-foreground))',
+            }}
+          >
+            {d.month}
+          </span>
         ))}
       </div>
     </div>
