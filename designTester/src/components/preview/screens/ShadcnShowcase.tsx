@@ -508,7 +508,7 @@ function SelectionControls() {
           />
           {/* Thumb (visual only) */}
           <div
-            className="pointer-events-none absolute top-1/2 h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-[var(--ds-radius-full,9999px)]"
+            className="ds-slider-thumb pointer-events-none absolute top-1/2 h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-[var(--ds-radius-full,9999px)]"
             style={{
               left: `${slider}%`,
               background: 'rgb(var(--ds-background))',

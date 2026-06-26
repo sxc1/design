@@ -275,7 +275,7 @@ export function ChakraShowcase() {
                   style={{ width: `${slider}%`, background: 'rgb(var(--ds-primary))' }}
                 />
                 <span
-                  className="absolute top-1/2 h-4 w-4 -translate-y-1/2 rounded-[var(--ds-radius-full,9999px)]"
+                  className="ds-slider-thumb absolute top-1/2 h-4 w-4 -translate-y-1/2 rounded-[var(--ds-radius-full,9999px)]"
                   style={{
                     left: `calc(${slider}% - 0.5rem)`,
                     background: 'rgb(var(--ds-background))',

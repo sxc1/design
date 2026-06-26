@@ -60,3 +60,38 @@ input[type='color']::-moz-color-swatch {
   border: none;
   border-radius: inherit;
 }
+
+/* ─── Live-preview focus ring ──────────────────────────────────────────────
+   Interactive elements inside the preview surface their keyboard-focus state
+   with the `ring` semantic token (--ds-ring, injected per-mode by
+   PreviewWrapper). :focus-visible keeps it keyboard-only, and outline-offset
+   gives the offset halo — the shadcn focus-ring idiom. Falls back to
+   --ds-primary, then a literal blue, if the `ring` reference is unset. */
+.preview-root
+  :is(
+    a[href],
+    button,
+    input,
+    select,
+    textarea,
+    summary,
+    [tabindex]:not([tabindex='-1']),
+    [role='button'],
+    [role='tab'],
+    [role='switch'],
+    [role='checkbox'],
+    [role='radio'],
+    [role='menuitem'],
+    [role='option']
+  ):focus-visible {
+  outline: 2px solid rgb(var(--ds-ring, var(--ds-primary, 59 130 246)));
+  outline-offset: 2px;
+}
+
+/* Range sliders layer a transparent native <input type="range"> over a styled
+   thumb; an outline on the invisible (opacity-0) input wouldn't show, so the
+   ring goes on the visible thumb when the input is keyboard-focused. */
+.preview-root :has(> input[type='range']:focus-visible) .ds-slider-thumb {
+  outline: 2px solid rgb(var(--ds-ring, var(--ds-primary, 59 130 246)));
+  outline-offset: 2px;
+}
