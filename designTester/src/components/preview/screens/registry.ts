@@ -1,5 +1,5 @@
 import type { ComponentType } from 'react';
-import { MockPage } from '@/components/preview/MockPage';
+import { Dashboard } from './Dashboard';
 import { AnalyticsDashboard } from './AnalyticsDashboard';
 import { SettingsAccount } from './SettingsAccount';
 import { ShadcnShowcase } from './ShadcnShowcase';
@@ -29,15 +29,15 @@ export const PREVIEW_GROUPS: { id: PreviewGroupId; label: string }[] = [
 
 export const PREVIEW_SCREENS: PreviewScreen[] = [
   // Overviews
-  { id: 'dashboard', label: 'Dashboard', group: 'overviews', component: MockPage },
+  { id: 'dashboard', label: 'Dashboard', group: 'overviews', component: Dashboard },
   { id: 'analytics', label: 'Analytics', group: 'overviews', component: AnalyticsDashboard },
   { id: 'settings', label: 'Settings', group: 'overviews', component: SettingsAccount },
-  // Showcases
-  { id: 'shadcn', label: 'shadcn/ui', group: 'showcases', component: ShadcnShowcase },
-  { id: 'material', label: 'Material UI', group: 'showcases', component: MaterialShowcase },
+  // Showcases (alphabetical by label)
   { id: 'ant', label: 'Ant Design', group: 'showcases', component: AntShowcase },
   { id: 'chakra', label: 'Chakra UI', group: 'showcases', component: ChakraShowcase },
   { id: 'kendo', label: 'KendoReact', group: 'showcases', component: KendoShowcase },
+  { id: 'material', label: 'Material UI', group: 'showcases', component: MaterialShowcase },
+  { id: 'shadcn', label: 'shadcn/ui', group: 'showcases', component: ShadcnShowcase },
   // Templates
   { id: 'marketing', label: 'Marketing', group: 'templates', component: MarketingPage },
   { id: 'pricing', label: 'Pricing', group: 'templates', component: PricingPage },
