@@ -7,6 +7,7 @@ import { MaterialShowcase } from './MaterialShowcase';
 import { AntShowcase } from './AntShowcase';
 import { ChakraShowcase } from './ChakraShowcase';
 import { KendoShowcase } from './KendoShowcase';
+import { ChartsShowcase } from './ChartsShowcase';
 import { MarketingPage } from './MarketingPage';
 import { PricingPage } from './PricingPage';
 import { AuthPage } from './AuthPage';
@@ -32,12 +33,13 @@ export const PREVIEW_SCREENS: PreviewScreen[] = [
   { id: 'dashboard', label: 'Dashboard', group: 'overviews', component: Dashboard },
   { id: 'analytics', label: 'Analytics', group: 'overviews', component: AnalyticsDashboard },
   { id: 'settings', label: 'Settings', group: 'overviews', component: SettingsAccount },
-  // Showcases (alphabetical by label)
+  // Showcases
   { id: 'ant', label: 'Ant Design', group: 'showcases', component: AntShowcase },
   { id: 'chakra', label: 'Chakra UI', group: 'showcases', component: ChakraShowcase },
   { id: 'kendo', label: 'KendoReact', group: 'showcases', component: KendoShowcase },
   { id: 'material', label: 'Material UI', group: 'showcases', component: MaterialShowcase },
   { id: 'shadcn', label: 'shadcn/ui', group: 'showcases', component: ShadcnShowcase },
+  { id: 'charts', label: 'Charts', group: 'showcases', component: ChartsShowcase },
   // Templates
   { id: 'marketing', label: 'Marketing', group: 'templates', component: MarketingPage },
   { id: 'pricing', label: 'Pricing', group: 'templates', component: PricingPage },
