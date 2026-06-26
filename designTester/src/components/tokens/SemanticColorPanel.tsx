@@ -74,8 +74,11 @@ function DataColorSection({ mode }: { mode: PreviewMode }) {
 
   return (
     <section className="rounded-lg border border-app-border bg-app-surface p-4">
-      <div className="mb-3 flex items-center justify-between gap-3">
-        <h3 className="text-sm font-semibold text-app-fg">Data</h3>
+      <div className="mb-3 flex items-start justify-between gap-3">
+        <div>
+          <h3 className="text-sm font-semibold text-app-fg">Data</h3>
+          <p className="text-xs text-app-muted">Preview in Showcases → Charts</p>
+        </div>
         <div className="flex shrink-0 items-center gap-1">
           <button
             type="button"
