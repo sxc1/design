@@ -47,6 +47,17 @@ export interface SemanticReference {
 
 export type SemanticMap = Partial<Record<SemanticRoleId, SemanticReference>>;
 
+/**
+ * Qualitative data palette: an ordered list of colors (exported as --data-1,
+ * --data-2, …) for categorical charts. A slot may be unassigned (e.g. after its
+ * palette is deleted), so entries are nullable. Kept per mode like semantics;
+ * the two modes always hold the same number of slots.
+ */
+export type DataReference = SemanticReference | null;
+
+export const MIN_DATA_COLORS = 4;
+export const MAX_DATA_COLORS = 8;
+
 export type PreviewMode = 'light' | 'dark';
 
 export interface TypographyTokens {
@@ -68,6 +79,10 @@ export interface TokenState {
   semantic: {
     light: SemanticMap;
     dark: SemanticMap;
+  };
+  data: {
+    light: DataReference[];
+    dark: DataReference[];
   };
   typography: TypographyTokens;
   spacing: SpacingTokens;

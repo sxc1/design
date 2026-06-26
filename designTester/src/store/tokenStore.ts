@@ -1,7 +1,10 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import {
+  MAX_DATA_COLORS,
+  MIN_DATA_COLORS,
   SHADE_STEPS,
+  type DataReference,
   type PreviewMode,
   type PrimitivePalette,
   type SemanticMap,
@@ -94,8 +97,72 @@ const DEFAULT_PALETTES: PrimitivePalette[] = [
   buildPalette('destructive', '#ef4444'),
 ];
 
+// Primitive palettes backing the qualitative data palette. Each base color is
+// the swatch its data role should read as; light and dark then each pick the
+// 50…950 step whose generated lightness lands closest to the intended swatch.
+const DATA_PALETTE_DEFS: { name: string; baseColor: string }[] = [
+  // Dark-mode rainbow set.
+  { name: 'rainbow-lilac', baseColor: '#c799ff' },
+  { name: 'rainbow-mint', baseColor: '#72dbc8' },
+  { name: 'rainbow-coral', baseColor: '#ff7893' },
+  { name: 'rainbow-blue', baseColor: '#4f8dff' },
+  // Light-mode additions (rainbow-lilac above is shared between the modes).
+  { name: 'turquoise', baseColor: '#26bfc9' },
+  { name: 'rainbow-peach', baseColor: '#fc9253' },
+  { name: 'crimson', baseColor: '#8c316e' },
+];
+
+interface DataRoleSpec {
+  name: string;
+  shade: ShadeStep;
+}
+
+// Default data roles per mode → {palette, shade}. rainbow-lilac is shared, so
+// each mode references a different shade of it.
+const DATA_LIGHT_SPECS: DataRoleSpec[] = [
+  { name: 'turquoise', shade: 400 }, // ≈ #26bfc9
+  { name: 'rainbow-lilac', shade: 500 }, // ≈ #b073ff (nearest shade of the shared palette)
+  { name: 'rainbow-peach', shade: 400 }, // ≈ #fc9253
+  { name: 'crimson', shade: 700 }, // ≈ #8c316e
+];
+const DATA_DARK_SPECS: DataRoleSpec[] = [
+  { name: 'rainbow-lilac', shade: 400 },
+  { name: 'rainbow-mint', shade: 300 },
+  { name: 'rainbow-coral', shade: 400 },
+  { name: 'rainbow-blue', shade: 500 },
+];
+
+const DATA_PALETTES: PrimitivePalette[] = DATA_PALETTE_DEFS.map((d) =>
+  buildPalette(d.name, d.baseColor),
+);
+
 function ref(paletteId: string, shade: ShadeStep): SemanticReference {
   return { paletteId, shade };
+}
+
+// Build the default data references for both modes from a name→palette lookup.
+// Used for the initial state and the migration, where the palettes may have
+// been merged into an existing set.
+function buildDefaultData(byName: Map<string, PrimitivePalette>): {
+  light: DataReference[];
+  dark: DataReference[];
+} {
+  const build = (specs: DataRoleSpec[]): DataReference[] =>
+    specs.map((s) => {
+      const palette = byName.get(s.name);
+      return palette ? ref(palette.id, s.shade) : null;
+    });
+  return { light: build(DATA_LIGHT_SPECS), dark: build(DATA_DARK_SPECS) };
+}
+
+// A sensible default reference for a newly added data slot: cycle through the
+// dark rainbow set, falling back to the first available palette (or unassigned).
+function defaultDataRef(palettes: PrimitivePalette[], index: number): DataReference {
+  const spec = DATA_DARK_SPECS[index % DATA_DARK_SPECS.length];
+  const named = palettes.find((p) => p.name === spec.name);
+  if (named) return ref(named.id, spec.shade);
+  const first = palettes[0];
+  return first ? ref(first.id, 500) : null;
 }
 
 function buildDefaultSemantics(palettes: PrimitivePalette[]): {
@@ -150,6 +217,7 @@ function buildDefaultSemantics(palettes: PrimitivePalette[]): {
 }
 
 const DEFAULT_SEMANTICS = buildDefaultSemantics(DEFAULT_PALETTES);
+const DEFAULT_DATA = buildDefaultData(new Map(DATA_PALETTES.map((p) => [p.name, p])));
 
 // Merge a preset's palettes into the existing set without dropping any: an
 // existing palette with the same name is reused as-is, missing ones are added.
@@ -186,9 +254,11 @@ function buildSxc1State(prev: TokenState): TokenState {
 
 const INITIAL_STATE: TokenState = {
   // Semantics are built from DEFAULT_PALETTES by index above; the stored array
-  // is sorted by color (references are by id, so resolution is unaffected).
-  palettes: sortPalettesByColor(DEFAULT_PALETTES),
+  // is sorted by color (references are by id, so resolution is unaffected). The
+  // rainbow data palettes are added alongside so the data roles resolve.
+  palettes: sortPalettesByColor([...DEFAULT_PALETTES, ...DATA_PALETTES]),
   semantic: DEFAULT_SEMANTICS,
+  data: DEFAULT_DATA,
   typography: DEFAULT_TYPOGRAPHY,
   spacing: DEFAULT_SPACING,
   previewMode: 'light',
@@ -209,6 +279,14 @@ export interface TokenActions {
     reference: SemanticReference,
   ) => void;
   clearSemantic: (mode: PreviewMode, role: SemanticRoleId) => void;
+
+  setDataColor: (
+    mode: PreviewMode,
+    index: number,
+    reference: DataReference,
+  ) => void;
+  addDataColor: () => void;
+  removeDataColor: () => void;
 
   setTypographyFamily: (
     which: 'fontFamilySans' | 'fontFamilySerif' | 'fontFamilyMono',
@@ -254,6 +332,10 @@ export const useTokenStore = create<TokenStore>()(
           semantic: {
             light: stripPaletteRefs(state.semantic.light, id),
             dark: stripPaletteRefs(state.semantic.dark, id),
+          },
+          data: {
+            light: stripPaletteDataRefs(state.data.light, id),
+            dark: stripPaletteDataRefs(state.data.dark, id),
           },
         })),
 
@@ -317,6 +399,38 @@ export const useTokenStore = create<TokenStore>()(
           const next = { ...state.semantic[mode] };
           delete next[role];
           return { semantic: { ...state.semantic, [mode]: next } };
+        }),
+
+      setDataColor: (mode, index, reference) =>
+        set((state) => {
+          if (index < 0 || index >= state.data[mode].length) return {};
+          const next = [...state.data[mode]];
+          next[index] = reference;
+          return { data: { ...state.data, [mode]: next } };
+        }),
+
+      // Slot count is shared across modes, so add/remove operate on both.
+      addDataColor: () =>
+        set((state) => {
+          if (state.data.light.length >= MAX_DATA_COLORS) return {};
+          const next = defaultDataRef(state.palettes, state.data.light.length);
+          return {
+            data: {
+              light: [...state.data.light, next],
+              dark: [...state.data.dark, next ? { ...next } : null],
+            },
+          };
+        }),
+
+      removeDataColor: () =>
+        set((state) => {
+          if (state.data.light.length <= MIN_DATA_COLORS) return {};
+          return {
+            data: {
+              light: state.data.light.slice(0, -1),
+              dark: state.data.dark.slice(0, -1),
+            },
+          };
         }),
 
       setTypographyFamily: (which, value) =>
@@ -401,6 +515,11 @@ export const useTokenStore = create<TokenStore>()(
         set({
           palettes: [],
           semantic: { light: {}, dark: {} },
+          // Keep the minimum number of (unassigned) data slots.
+          data: {
+            light: Array.from({ length: MIN_DATA_COLORS }, () => null),
+            dark: Array.from({ length: MIN_DATA_COLORS }, () => null),
+          },
           previewMode: INITIAL_STATE.previewMode,
           previewScreen: INITIAL_STATE.previewScreen,
         }),
@@ -430,12 +549,32 @@ export const useTokenStore = create<TokenStore>()(
     }),
     {
       name: 'design-token-selector',
-      version: 2,
-      // v2 sorts palettes by color; re-sort any state persisted under v1.
-      migrate: (persisted, _version) => {
+      version: 4,
+      // v2 sorts palettes by color; v3 introduced the qualitative data palette;
+      // v4 gives it distinct light/dark defaults, so re-seed when below v4.
+      migrate: (persisted, version) => {
         const state = persisted as Partial<TokenState> | undefined;
-        if (state && Array.isArray(state.palettes)) {
-          state.palettes = sortPalettesByColor(state.palettes);
+        if (state) {
+          if (Array.isArray(state.palettes)) {
+            state.palettes = sortPalettesByColor(state.palettes);
+          }
+          // Seed/refresh the data palette: merge its backing palettes into the
+          // existing set (reusing any with matching names) and re-point the data
+          // roles at them.
+          if (
+            version < 4 ||
+            !state.data ||
+            !Array.isArray(state.data.light) ||
+            !Array.isArray(state.data.dark)
+          ) {
+            const existing = Array.isArray(state.palettes) ? state.palettes : [];
+            const { palettes, byName } = mergePresetPalettes(
+              existing,
+              DATA_PALETTE_DEFS,
+            );
+            state.palettes = palettes;
+            state.data = buildDefaultData(byName);
+          }
         }
         return state as TokenStore;
       },
@@ -452,6 +591,15 @@ function stripPaletteRefs(map: SemanticMap, paletteId: string): SemanticMap {
     }
   }
   return next;
+}
+
+// Null out (but keep) any data slots that pointed at a deleted palette, so the
+// slot count — and the --data-N numbering — stays stable.
+function stripPaletteDataRefs(
+  refs: DataReference[],
+  paletteId: string,
+): DataReference[] {
+  return refs.map((r) => (r && r.paletteId === paletteId ? null : r));
 }
 
 export function resolveSemanticColor(

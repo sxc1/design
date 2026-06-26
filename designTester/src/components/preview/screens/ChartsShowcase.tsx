@@ -1,5 +1,7 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
+import { useTokenStore } from '@/store/tokenStore';
+import { MAX_DATA_COLORS } from '@/types/tokens';
 
 /* Two series, both derived from the brand color so they recolor with the
    palette: Mobile is the solid primary, Desktop a lighter translucent tint. */
@@ -99,6 +101,31 @@ const BAR_DATA = [
 const BAR_MAX = Math.max(...BAR_DATA.map((d) => d.desktop + d.mobile));
 const BAR_PLOT_H = 220;
 
+/* ─────────── Line chart: one line per qualitative data color ─────────── */
+
+const LINE_MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug'];
+const LINE_POINTS = LINE_MONTHS.length;
+const LINE_W = 920;
+const LINE_H = 260; // must match the rendered svg height for px overlays to line up
+const LINE_TOP_PAD = 22;
+const LINE_BOT_PAD = 14;
+
+// One deterministic series per possible data color (max 8). Each gets a
+// distinct phase/offset so the lines stay visually separable.
+const LINE_SERIES: number[][] = Array.from({ length: MAX_DATA_COLORS }, (_, s) =>
+  Array.from({ length: LINE_POINTS }, (_, i) => {
+    const wave = 150 + 70 * Math.sin(i / 1.7 + s * 1.3) + 35 * Math.sin(i / 1.1 + s);
+    return Math.max(25, wave + (noise(i * 3 + s * 71) - 0.5) * 90);
+  }),
+);
+
+const lineX = (i: number) => (i / (LINE_POINTS - 1)) * LINE_W;
+const lineY = (v: number, max: number) =>
+  LINE_H - LINE_BOT_PAD - (v / max) * (LINE_H - LINE_TOP_PAD - LINE_BOT_PAD);
+
+// The nth data color, falling back to a muted tone if that slot is unassigned.
+const dataColor = (n: number) => `rgb(var(--ds-data-${n}, var(--ds-muted-foreground)))`;
+
 /* ─────────────────────────── Screen ─────────────────────────── */
 
 export function ChartsShowcase() {
@@ -142,6 +169,13 @@ export function ChartsShowcase() {
         className="flex flex-col gap-[var(--ds-space-6,1.5rem)]"
         style={{ padding: 'var(--ds-space-6, 1.5rem)' }}
       >
+        <ChartCard
+          title="Line Chart - Multiple"
+          description="Qualitative data palette — one line per --data color"
+        >
+          <LineChartBody />
+        </ChartCard>
+
         <ChartCard
           title="Area Chart - Interactive"
           description="Showing total visitors for the last 3 months"
@@ -337,7 +371,15 @@ function AreaChartBody() {
   );
 }
 
-function HoverDot({ x, y }: { x: number; y: number }) {
+function HoverDot({
+  x,
+  y,
+  color = 'rgb(var(--ds-primary))',
+}: {
+  x: number;
+  y: number;
+  color?: string;
+}) {
   return (
     <span
       className="pointer-events-none absolute h-2.5 w-2.5 rounded-[var(--ds-radius-full,9999px)]"
@@ -345,7 +387,7 @@ function HoverDot({ x, y }: { x: number; y: number }) {
         left: `${x}px`,
         top: `${y}px`,
         transform: 'translate(-50%, -50%)',
-        background: 'rgb(var(--ds-primary))',
+        background: color,
         border: '2px solid rgb(var(--ds-card))',
       }}
     />
@@ -438,6 +480,122 @@ function BarChartBody() {
       </div>
 
       <Legend className="mt-[var(--ds-space-4,1rem)]" />
+    </div>
+  );
+}
+
+/* ─────────────────────────── Line chart ─────────────────────────── */
+
+function LineChartBody() {
+  const count = useTokenStore((s) => s.data.light.length);
+  const [hover, setHover] = useState<{ i: number; width: number } | null>(null);
+
+  const visible = useMemo(() => LINE_SERIES.slice(0, count), [count]);
+  const max = useMemo(() => Math.max(...visible.flat()), [visible]);
+  const paths = useMemo(
+    () =>
+      visible.map((vals) => smoothLine(vals.map((v, i) => [lineX(i), lineY(v, max)]))),
+    [visible, max],
+  );
+
+  function onMove(e: React.MouseEvent<HTMLDivElement>) {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const frac = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+    const i = Math.round(frac * (LINE_POINTS - 1));
+    setHover({ i, width: rect.width });
+  }
+
+  const cx = hover ? (hover.i / (LINE_POINTS - 1)) * hover.width : 0;
+  const tooltipY = hover
+    ? Math.min(...visible.map((vals) => lineY(vals[hover.i], max)))
+    : 0;
+
+  return (
+    <div>
+      <div className="relative" onMouseMove={onMove} onMouseLeave={() => setHover(null)}>
+        <svg
+          viewBox={`0 0 ${LINE_W} ${LINE_H}`}
+          preserveAspectRatio="none"
+          className="h-[260px] w-full"
+          role="img"
+          aria-label="Multi-line chart, one line per qualitative data color"
+        >
+          {[0.25, 0.5, 0.75].map((f) => (
+            <line
+              key={f}
+              x1="0"
+              x2={LINE_W}
+              y1={LINE_H * f}
+              y2={LINE_H * f}
+              stroke="rgb(var(--ds-border))"
+              strokeWidth="1"
+              opacity="0.6"
+              vectorEffect="non-scaling-stroke"
+            />
+          ))}
+
+          {paths.map((d, s) => (
+            <path
+              key={s}
+              d={d}
+              fill="none"
+              stroke={dataColor(s + 1)}
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              vectorEffect="non-scaling-stroke"
+            />
+          ))}
+        </svg>
+
+        {hover ? (
+          <>
+            <div
+              className="pointer-events-none absolute bottom-0 top-0 w-px"
+              style={{ left: `${cx}px`, background: 'rgb(var(--ds-foreground))', opacity: 0.18 }}
+            />
+            {visible.map((vals, s) => (
+              <HoverDot key={s} x={cx} y={lineY(vals[hover.i], max)} color={dataColor(s + 1)} />
+            ))}
+            <TooltipBox x={cx} y={tooltipY} width={hover.width}>
+              <TooltipCard
+                label={LINE_MONTHS[hover.i]}
+                items={visible.map((vals, s) => ({
+                  name: `Series ${s + 1}`,
+                  value: Math.round(vals[hover.i]),
+                  color: dataColor(s + 1),
+                }))}
+              />
+            </TooltipBox>
+          </>
+        ) : null}
+      </div>
+
+      <div
+        className="mt-[var(--ds-space-2,0.5rem)] flex justify-between"
+        style={{
+          fontSize: 'var(--ds-text-xs, 0.75rem)',
+          color: 'rgb(var(--ds-muted-foreground))',
+        }}
+      >
+        {LINE_MONTHS.map((m) => (
+          <span key={m}>{m}</span>
+        ))}
+      </div>
+
+      <DataLegend count={count} className="mt-[var(--ds-space-4,1rem)]" />
+    </div>
+  );
+}
+
+function DataLegend({ count, className }: { count: number; className?: string }) {
+  return (
+    <div
+      className={`flex flex-wrap items-center justify-center gap-x-[var(--ds-space-5,1.25rem)] gap-y-[var(--ds-space-2,0.5rem)] ${className ?? ''}`}
+    >
+      {Array.from({ length: count }, (_, i) => (
+        <LegendItem key={i} color={dataColor(i + 1)} label={`Series ${i + 1}`} />
+      ))}
     </div>
   );
 }

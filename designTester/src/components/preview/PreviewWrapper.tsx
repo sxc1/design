@@ -30,6 +30,7 @@ export function PreviewWrapper({ children }: PreviewWrapperProps) {
   const previewMode = useTokenStore((s) => s.previewMode);
   const palettes = useTokenStore((s) => s.palettes);
   const semantic = useTokenStore((s) => s.semantic[previewMode]);
+  const data = useTokenStore((s) => s.data[previewMode]);
   const typography = useTokenStore((s) => s.typography);
   const spacing = useTokenStore((s) => s.spacing);
 
@@ -44,6 +45,14 @@ export function PreviewWrapper({ children }: PreviewWrapperProps) {
         vars[`--ds-${role.id}`] = triplet;
       }
     }
+
+    // Qualitative data palette → --ds-data-1, --ds-data-2, …
+    data.forEach((ref, i) => {
+      const triplet = hexToRgbTriplet(resolveSemanticColor(ref ?? undefined, palettes));
+      if (triplet) {
+        vars[`--ds-data-${i + 1}`] = triplet;
+      }
+    });
 
     vars['--ds-font-sans'] = typography.fontFamilySans;
     vars['--ds-font-serif'] = typography.fontFamilySerif;
@@ -73,7 +82,7 @@ export function PreviewWrapper({ children }: PreviewWrapperProps) {
     }
 
     return vars;
-  }, [palettes, semantic, typography, spacing]);
+  }, [palettes, semantic, data, typography, spacing]);
 
   return (
     <div
