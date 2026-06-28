@@ -10,6 +10,7 @@ import {
   type SemanticMap,
   type SemanticReference,
   type SemanticRoleId,
+  type ShadeRef,
   type ShadeStep,
   type SpacingTokens,
   type TokenState,
@@ -96,6 +97,7 @@ const DEFAULT_PALETTES: PrimitivePalette[] = [
   buildPalette('neutral', '#64748b'),
   buildPalette('destructive', '#ef4444'),
 ];
+const BASIC_NEUTRAL_PRESET = [{ name: 'neutral', baseColor: '#64748b' }] as const;
 
 // Primitive palettes backing the qualitative data palette. Each base color is
 // the swatch its data role should read as; light and dark then each pick the
@@ -114,7 +116,7 @@ const DATA_PALETTE_DEFS: { name: string; baseColor: string }[] = [
 
 interface DataRoleSpec {
   name: string;
-  shade: ShadeStep;
+  shade: ShadeRef;
 }
 
 // Default data roles per mode → {palette, shade}. rainbow-lilac is shared, so
@@ -132,11 +134,34 @@ const DATA_DARK_SPECS: DataRoleSpec[] = [
   { name: 'rainbow-blue', shade: 500 },
 ];
 
+// Merged Carbon palettes for Basic with per-series base chosen by request:
+// purple: dark, cyan: light, teal: dark, magenta: light.
+const BASIC_CARBON_DATA_PALETTE_DEFS: { name: string; baseColor: string }[] = [
+  { name: 'cds-purple', baseColor: '#8a3ffc' },
+  { name: 'cds-cyan', baseColor: '#1192e8' },
+  { name: 'cds-teal', baseColor: '#007d79' },
+  { name: 'cds-magenta', baseColor: '#9f1853' },
+];
+
+// Opposite-mode shades are the nearest matches from the generated scale.
+const BASIC_CARBON_LIGHT_SPECS: DataRoleSpec[] = [
+  { name: 'cds-purple', shade: 700 }, // closest to Purple 70 from purple-dark base
+  { name: 'cds-cyan', shade: 'base' }, // cyan-light base
+  { name: 'cds-teal', shade: 700 }, // closest to Teal 70 from teal-dark base
+  { name: 'cds-magenta', shade: 'base' }, // magenta-light base
+];
+const BASIC_CARBON_DARK_SPECS: DataRoleSpec[] = [
+  { name: 'cds-purple', shade: 'base' }, // purple-dark base
+  { name: 'cds-cyan', shade: 400 }, // closest to Cyan 40 from cyan-light base
+  { name: 'cds-teal', shade: 'base' }, // teal-dark base
+  { name: 'cds-magenta', shade: 400 }, // closest to Magenta 40 from magenta-light base
+];
+
 const DATA_PALETTES: PrimitivePalette[] = DATA_PALETTE_DEFS.map((d) =>
   buildPalette(d.name, d.baseColor),
 );
 
-function ref(paletteId: string, shade: ShadeStep): SemanticReference {
+function ref(paletteId: string, shade: ShadeRef): SemanticReference {
   return { paletteId, shade };
 }
 
@@ -147,12 +172,30 @@ function buildDefaultData(byName: Map<string, PrimitivePalette>): {
   light: DataReference[];
   dark: DataReference[];
 } {
+  return buildDataFromSpecs(byName, DATA_LIGHT_SPECS, DATA_DARK_SPECS);
+}
+
+function buildBasicData(byName: Map<string, PrimitivePalette>): {
+  light: DataReference[];
+  dark: DataReference[];
+} {
+  return buildDataFromSpecs(byName, BASIC_CARBON_LIGHT_SPECS, BASIC_CARBON_DARK_SPECS);
+}
+
+function buildDataFromSpecs(
+  byName: Map<string, PrimitivePalette>,
+  lightSpecs: DataRoleSpec[],
+  darkSpecs: DataRoleSpec[],
+): {
+  light: DataReference[];
+  dark: DataReference[];
+} {
   const build = (specs: DataRoleSpec[]): DataReference[] =>
     specs.map((s) => {
       const palette = byName.get(s.name);
       return palette ? ref(palette.id, s.shade) : null;
     });
-  return { light: build(DATA_LIGHT_SPECS), dark: build(DATA_DARK_SPECS) };
+  return { light: build(lightSpecs), dark: build(darkSpecs) };
 }
 
 // A sensible default reference for a newly added data slot: cycle through the
@@ -241,7 +284,10 @@ function mergePresetPalettes(
 }
 
 function buildSxc1State(prev: TokenState): TokenState {
-  const { palettes, byName } = mergePresetPalettes(prev.palettes, SXC1_PRESET);
+  const { palettes, byName } = mergePresetPalettes(prev.palettes, [
+    ...BASIC_NEUTRAL_PRESET,
+    ...SXC1_PRESET,
+  ]);
   const brand = byName.get(SXC1_SEMANTIC_PICKS.brand)!;
   const neutral = byName.get(SXC1_SEMANTIC_PICKS.neutral)!;
   const destructive = byName.get(SXC1_SEMANTIC_PICKS.destructive)!;
@@ -249,6 +295,7 @@ function buildSxc1State(prev: TokenState): TokenState {
     ...prev,
     palettes,
     semantic: buildDefaultSemantics([brand, neutral, destructive]),
+    data: buildDefaultData(byName),
   };
 }
 
@@ -308,6 +355,7 @@ export interface TokenActions {
   clearAll: () => void;
   loadBasicPreset: () => void;
   loadSxc1Preset: () => void;
+  loadExpPreset: () => void;
   importFromCss: (css: string) => ImportSummary | null;
 }
 
@@ -528,17 +576,19 @@ export const useTokenStore = create<TokenStore>()(
         set((state) => {
           const { palettes, byName } = mergePresetPalettes(
             state.palettes,
-            DEFAULT_PALETTES,
+            [...DEFAULT_PALETTES, ...BASIC_CARBON_DATA_PALETTE_DEFS],
           );
           const basics = DEFAULT_PALETTES.map((p) => byName.get(p.name)!);
           return {
             ...state,
             palettes,
             semantic: buildDefaultSemantics(basics),
+            data: buildBasicData(byName),
           };
         }),
 
       loadSxc1Preset: () => set((state) => buildSxc1State(state)),
+      loadExpPreset: () => set((state) => buildSxc1State(state)),
 
       importFromCss: (css) => {
         const result = importCssTokens(css, get());
