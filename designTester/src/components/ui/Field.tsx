@@ -67,11 +67,13 @@ export function HexInput({
   return (
     <div
       className={[
-        'inline-flex w-full items-center rounded-md border bg-app-surface shadow-sm transition focus-within:ring-2',
+        'inline-flex items-center rounded-md border bg-app-surface shadow-sm transition focus-within:ring-2',
         invalid
           ? 'border-rose-500 focus-within:border-rose-500 focus-within:ring-rose-500/30'
           : 'border-app-border focus-within:border-app-accent focus-within:ring-app-accent/40',
-        className ?? '',
+        // Default to full width; a width passed via className (e.g. w-24) wins
+        // because the hardcoded w-full would otherwise override it on CSS order.
+        className ?? 'w-full',
       ].join(' ')}
     >
       <span

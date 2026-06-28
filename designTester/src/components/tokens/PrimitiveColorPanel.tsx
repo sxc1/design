@@ -79,7 +79,7 @@ export function PrimitiveColorPanel() {
                 value={newColor}
                 onChange={setNewColor}
                 invalid={!isValidColor(newColor)}
-                className="w-28"
+                className="w-24"
               />
             </div>
           </Field>
@@ -153,6 +153,7 @@ function PaletteCard({
   if (!palette) return null;
 
   const baseInvalid = !isValidColor(palette.baseColor);
+  const hasOverrides = Object.keys(palette.overrides).length > 0;
 
   // Editing the base color marks the card dirty so its "Confirm" button appears.
   const handleBaseColorChange = (value: string) => {
@@ -194,7 +195,7 @@ function PaletteCard({
               value={palette.baseColor}
               onChange={handleBaseColorChange}
               invalid={baseInvalid}
-              className="w-28"
+              className="w-24"
             />
           </div>
         </Field>
@@ -209,11 +210,34 @@ function PaletteCard({
           </Button>
         ) : null}
         <div className="ml-auto flex gap-2">
-          <Button size="sm" variant="ghost" onClick={() => resetPaletteOverrides(palette.id)}>
-            Reset overrides
-          </Button>
-          <Button size="sm" variant="danger" onClick={() => removePalette(palette.id)}>
-            Remove
+          {hasOverrides ? (
+            <Button size="sm" variant="ghost" onClick={() => resetPaletteOverrides(palette.id)}>
+              Reset overrides
+            </Button>
+          ) : null}
+          <Button
+            size="sm"
+            variant="danger"
+            onClick={() => removePalette(palette.id)}
+            aria-label="Remove palette"
+            title="Remove palette"
+          >
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={2}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="h-4 w-4"
+              aria-hidden="true"
+            >
+              <path d="M3 6h18" />
+              <path d="M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2" />
+              <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+              <path d="M10 11v6" />
+              <path d="M14 11v6" />
+            </svg>
           </Button>
         </div>
       </div>
