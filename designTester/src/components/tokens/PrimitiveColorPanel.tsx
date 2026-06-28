@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTokenStore } from '@/store/tokenStore';
 import { SHADE_STEPS, type ShadeStep } from '@/types/tokens';
 import { isValidColor, toHexSafe } from '@/lib/colorScale';
@@ -8,9 +8,47 @@ import { Field, HexInput, TextInput } from '@/components/ui/Field';
 export function PrimitiveColorPanel() {
   const palettes = useTokenStore((s) => s.palettes);
   const addPalette = useTokenStore((s) => s.addPalette);
+  const sortPalettes = useTokenStore((s) => s.sortPalettes);
 
   const [newName, setNewName] = useState('');
   const [newColor, setNewColor] = useState('#22c55e');
+
+  // Re-sorting palettes by color is deferred to an explicit "Confirm" click so
+  // that editing a base color doesn't reorder the list (and steal focus from
+  // the field) mid-edit. The button only appears on a card whose base color has
+  // an unconfirmed edit (`dirty`). On confirm we sort, then scroll the confirmed
+  // card into view and blink a focus ring around it. `flash` carries the target
+  // id plus a nonce so the same card can be re-confirmed and re-blink.
+  const cardRefs = useRef(new Map<string, HTMLElement>());
+  const [flash, setFlash] = useState<{ id: string; nonce: number } | null>(null);
+  const [dirty, setDirty] = useState<Set<string>>(() => new Set());
+
+  const markEdited = useCallback((id: string) => {
+    setDirty((prev) => {
+      if (prev.has(id)) return prev;
+      const next = new Set(prev);
+      next.add(id);
+      return next;
+    });
+  }, []);
+
+  const handleConfirm = useCallback(
+    (id: string) => {
+      sortPalettes();
+      setFlash((prev) => ({ id, nonce: (prev?.nonce ?? 0) + 1 }));
+      // A confirm sorts the whole list, so every pending edit is now resolved.
+      setDirty((prev) => (prev.size ? new Set() : prev));
+    },
+    [sortPalettes],
+  );
+
+  // After the sort reorders the cards, scroll the confirmed one into view.
+  useEffect(() => {
+    if (!flash) return;
+    cardRefs.current
+      .get(flash.id)
+      ?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }, [flash]);
 
   const validNew = newName.trim().length > 0 && isValidColor(newColor);
 
@@ -60,7 +98,18 @@ export function PrimitiveColorPanel() {
 
       <div className="flex flex-col gap-4">
         {palettes.map((p) => (
-          <PaletteCard key={p.id} paletteId={p.id} />
+          <PaletteCard
+            key={p.id}
+            paletteId={p.id}
+            dirty={dirty.has(p.id)}
+            onEdit={markEdited}
+            onConfirm={handleConfirm}
+            flashNonce={flash?.id === p.id ? flash.nonce : undefined}
+            setCardRef={(el) => {
+              if (el) cardRefs.current.set(p.id, el);
+              else cardRefs.current.delete(p.id);
+            }}
+          />
         ))}
         {palettes.length === 0 ? (
           <p className="text-sm text-app-muted">No palettes yet — add one above.</p>
@@ -70,7 +119,23 @@ export function PrimitiveColorPanel() {
   );
 }
 
-function PaletteCard({ paletteId }: { paletteId: string }) {
+interface PaletteCardProps {
+  paletteId: string;
+  dirty: boolean;
+  onEdit: (id: string) => void;
+  onConfirm: (id: string) => void;
+  flashNonce?: number;
+  setCardRef: (el: HTMLElement | null) => void;
+}
+
+function PaletteCard({
+  paletteId,
+  dirty,
+  onEdit,
+  onConfirm,
+  flashNonce,
+  setCardRef,
+}: PaletteCardProps) {
   const palette = useTokenStore((s) => s.palettes.find((p) => p.id === paletteId));
   const renamePalette = useTokenStore((s) => s.renamePalette);
   const setPaletteBaseColor = useTokenStore((s) => s.setPaletteBaseColor);
@@ -78,12 +143,36 @@ function PaletteCard({ paletteId }: { paletteId: string }) {
   const setShadeOverride = useTokenStore((s) => s.setShadeOverride);
   const resetPaletteOverrides = useTokenStore((s) => s.resetPaletteOverrides);
 
+  // Each confirm bumps `flashNonce`; mirror it into local state and key the ring
+  // overlay by it so the element remounts and replays its blink animation.
+  const [ring, setRing] = useState<number | null>(null);
+  useEffect(() => {
+    if (flashNonce !== undefined) setRing(flashNonce);
+  }, [flashNonce]);
+
   if (!palette) return null;
 
   const baseInvalid = !isValidColor(palette.baseColor);
 
+  // Editing the base color marks the card dirty so its "Confirm" button appears.
+  const handleBaseColorChange = (value: string) => {
+    setPaletteBaseColor(palette.id, value);
+    onEdit(palette.id);
+  };
+
   return (
-    <section className="rounded-lg border border-app-border bg-app-surface p-4">
+    <section
+      ref={setCardRef}
+      className="relative rounded-lg border border-app-border bg-app-surface p-4"
+    >
+      {ring !== null ? (
+        <span
+          key={ring}
+          aria-hidden="true"
+          onAnimationEnd={() => setRing(null)}
+          className="palette-confirm-ring pointer-events-none absolute -inset-px rounded-lg"
+        />
+      ) : null}
       <div className="mb-3 flex flex-wrap items-end gap-3">
         <Field label="Palette name">
           <TextInput
@@ -98,17 +187,27 @@ function PaletteCard({ paletteId }: { paletteId: string }) {
               <input
                 type="color"
                 value={isValidColor(palette.baseColor) ? toHexSafe(palette.baseColor) : '#000000'}
-                onChange={(e) => setPaletteBaseColor(palette.id, e.target.value)}
+                onChange={(e) => handleBaseColorChange(e.target.value)}
               />
             </div>
             <HexInput
               value={palette.baseColor}
-              onChange={(value) => setPaletteBaseColor(palette.id, value)}
+              onChange={handleBaseColorChange}
               invalid={baseInvalid}
               className="w-28"
             />
           </div>
         </Field>
+        {dirty ? (
+          <Button
+            size="md"
+            variant="primary"
+            onClick={() => onConfirm(palette.id)}
+            title="Re-sort palettes by color and jump to this one"
+          >
+            Confirm
+          </Button>
+        ) : null}
         <div className="ml-auto flex gap-2">
           <Button size="sm" variant="ghost" onClick={() => resetPaletteOverrides(palette.id)}>
             Reset overrides

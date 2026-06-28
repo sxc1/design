@@ -317,6 +317,7 @@ export interface TokenActions {
   removePalette: (id: string) => void;
   renamePalette: (id: string, name: string) => void;
   setPaletteBaseColor: (id: string, baseColor: string) => void;
+  sortPalettes: () => void;
   setShadeOverride: (id: string, shade: ShadeStep, value: string | null) => void;
   resetPaletteOverrides: (id: string) => void;
 
@@ -392,20 +393,25 @@ export const useTokenStore = create<TokenStore>()(
           palettes: state.palettes.map((p) => (p.id === id ? { ...p, name } : p)),
         })),
 
+      // Update in place WITHOUT re-sorting. Re-sorting on every edit would
+      // reorder the list mid-keystroke and steal focus from the field being
+      // edited; the user re-sorts explicitly via the card's "Confirm" button
+      // (sortPalettes).
       setPaletteBaseColor: (id, baseColor) =>
         set((state) => ({
-          palettes: sortPalettesByColor(
-            state.palettes.map((p) =>
-              p.id === id
-                ? {
-                    ...p,
-                    baseColor,
-                    scale: resolveScale(baseColor, p.overrides),
-                  }
-                : p,
-            ),
+          palettes: state.palettes.map((p) =>
+            p.id === id
+              ? {
+                  ...p,
+                  baseColor,
+                  scale: resolveScale(baseColor, p.overrides),
+                }
+              : p,
           ),
         })),
+
+      sortPalettes: () =>
+        set((state) => ({ palettes: sortPalettesByColor(state.palettes) })),
 
       setShadeOverride: (id, shade, value) =>
         set((state) => ({
