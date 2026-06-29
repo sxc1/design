@@ -83,7 +83,7 @@ export function AuthPage() {
               <input
                 type="password"
                 defaultValue="password"
-                className="mt-[var(--ds-space-1,0.25rem)] w-full rounded-[var(--ds-radius-md,0.375rem)] px-[var(--ds-space-3,0.75rem)] py-[var(--ds-space-2,0.5rem)] text-[length:var(--ds-text-sm,0.875rem)] outline-none"
+                className="mt-[var(--ds-space-1,0.25rem)] w-full rounded-[var(--ds-radius-md,0.375rem)] px-[var(--ds-space-3,0.75rem)] py-[var(--ds-space-2,0.5rem)] text-[length:var(--ds-text-sm,0.875rem)] outline-hidden"
                 style={{
                   background: 'rgb(var(--ds-background))',
                   color: 'rgb(var(--ds-foreground))',
@@ -168,7 +168,7 @@ function AuthField({
       <input
         type={type}
         defaultValue={value}
-        className="rounded-[var(--ds-radius-md,0.375rem)] px-[var(--ds-space-3,0.75rem)] py-[var(--ds-space-2,0.5rem)] text-[length:var(--ds-text-sm,0.875rem)] outline-none"
+        className="rounded-[var(--ds-radius-md,0.375rem)] px-[var(--ds-space-3,0.75rem)] py-[var(--ds-space-2,0.5rem)] text-[length:var(--ds-text-sm,0.875rem)] outline-hidden"
         style={{
           background: 'rgb(var(--ds-background))',
           color: 'rgb(var(--ds-foreground))',

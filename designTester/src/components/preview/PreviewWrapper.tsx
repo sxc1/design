@@ -22,6 +22,13 @@ function hexToRgbTriplet(input: string | null): string | null {
   return `${r} ${g} ${b}`;
 }
 
+// CSS custom-property names can't contain a literal dot, so a scale key like
+// `0.5` is emitted as `--ds-space-0_5`. The preview screens reference the same
+// underscore form; escaped dots inside var() trip up v4's Lightning CSS.
+function cssVarKey(key: string): string {
+  return key.replace(/\./g, '_');
+}
+
 interface PreviewWrapperProps {
   children: ReactNode;
 }
@@ -59,16 +66,16 @@ export function PreviewWrapper({ children }: PreviewWrapperProps) {
     vars['--ds-font-mono'] = typography.fontFamilyMono;
 
     for (const [key, value] of Object.entries(typography.fontSizeScale)) {
-      vars[`--ds-text-${key}`] = value;
+      vars[`--ds-text-${cssVarKey(key)}`] = value;
     }
     for (const [key, value] of Object.entries(typography.fontWeightScale)) {
-      vars[`--ds-weight-${key}`] = String(value);
+      vars[`--ds-weight-${cssVarKey(key)}`] = String(value);
     }
     for (const [key, value] of Object.entries(typography.lineHeightScale)) {
-      vars[`--ds-leading-${key}`] = value;
+      vars[`--ds-leading-${cssVarKey(key)}`] = value;
     }
     for (const [key, value] of Object.entries(spacing.scale)) {
-      vars[`--ds-space-${key}`] = value;
+      vars[`--ds-space-${cssVarKey(key)}`] = value;
     }
 
     for (const [key, value] of Object.entries(HARDCODED_RADIUS)) {

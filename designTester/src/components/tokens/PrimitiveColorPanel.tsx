@@ -295,7 +295,7 @@ function ShadeSwatch({ step, color, overridden, onChange }: ShadeSwatchProps) {
           <div className="flex gap-1">
             <button
               type="button"
-              className="flex-1 rounded bg-app-accent text-white text-[10px] py-0.5"
+              className="flex-1 rounded-sm bg-app-accent text-white text-[10px] py-0.5"
               onClick={() => {
                 if (isValidColor(draft)) {
                   onChange(draft);
@@ -307,7 +307,7 @@ function ShadeSwatch({ step, color, overridden, onChange }: ShadeSwatchProps) {
             </button>
             <button
               type="button"
-              className="flex-1 rounded border border-app-border text-app-fg text-[10px] py-0.5"
+              className="flex-1 rounded-sm border border-app-border text-app-fg text-[10px] py-0.5"
               onClick={() => {
                 onChange(null);
                 setEditing(false);

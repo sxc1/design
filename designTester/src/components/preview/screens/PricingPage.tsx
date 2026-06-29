@@ -121,7 +121,7 @@ export function PricingPage() {
                 </h3>
                 {tier.featured ? (
                   <span
-                    className="rounded-[var(--ds-radius-full,9999px)] px-[var(--ds-space-2,0.5rem)] py-[var(--ds-space-0\\.5,0.125rem)]"
+                    className="rounded-[var(--ds-radius-full,9999px)] px-[var(--ds-space-2,0.5rem)] py-[var(--ds-space-0_5,0.125rem)]"
                     style={{
                       fontSize: 'var(--ds-text-xs, 0.75rem)',
                       fontWeight: 'var(--ds-weight-semibold, 600)',

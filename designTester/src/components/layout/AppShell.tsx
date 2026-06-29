@@ -11,7 +11,7 @@ import { getScreen } from '@/components/preview/screens/registry';
 import { Button } from '@/components/ui/Button';
 import { ModeToggle } from '@/components/preview/ModeToggle';
 import { useTokenStore } from '@/store/tokenStore';
-import { exportTailwindV3 } from '@/lib/exportTailwindV3';
+import { exportTailwindV4 } from '@/lib/exportTailwindV4';
 
 export function AppShell() {
   const [activeTab, setActiveTab] = useState<TabId>('primitive');
@@ -58,11 +58,7 @@ export function AppShell() {
 
   function handleExport() {
     const state = useTokenStore.getState();
-    const { config, css } = exportTailwindV3(state);
-    saveAs(
-      new Blob([config], { type: 'application/javascript;charset=utf-8' }),
-      'tailwind.config.js',
-    );
+    const { css } = exportTailwindV4(state);
     saveAs(
       new Blob([css], { type: 'text/css;charset=utf-8' }),
       'tokens.css',
@@ -79,7 +75,7 @@ export function AppShell() {
             aria-label={sidebarCollapsed ? 'Expand token editor' : 'Collapse token editor'}
             aria-expanded={!sidebarCollapsed}
             title={sidebarCollapsed ? 'Expand token editor' : 'Collapse token editor'}
-            className="flex h-7 w-7 items-center justify-center rounded-md bg-app-accent text-white transition-opacity hover:opacity-85 focus:outline-none focus-visible:ring-2 focus-visible:ring-app-accent focus-visible:ring-offset-2 focus-visible:ring-offset-app-surface"
+            className="flex h-7 w-7 items-center justify-center rounded-md bg-app-accent text-white transition-opacity hover:opacity-85 focus:outline-hidden focus-visible:ring-2 focus-visible:ring-app-accent focus-visible:ring-offset-2 focus-visible:ring-offset-app-surface"
           >
             <svg
               viewBox="0 0 24 24"
@@ -101,7 +97,7 @@ export function AppShell() {
               Design Token Selector
             </h1>
             <p className="text-xs leading-tight text-app-muted">
-              Build a Tailwind v3 token set with a live preview.
+              Build a Tailwind v4 token set with a live preview.
             </p>
           </div>
         </div>
@@ -144,7 +140,7 @@ export function AppShell() {
             Import CSS
           </Button>
           <Button variant="primary" size="md" onClick={handleExport}>
-            Export Tailwind Config
+            Export Tailwind CSS
           </Button>
         </div>
       </header>

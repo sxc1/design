@@ -288,7 +288,7 @@ function OutlinedField({
       <input
         type={type}
         defaultValue={value}
-        className="w-full rounded-[var(--ds-radius-sm,0.25rem)] px-[var(--ds-space-3,0.75rem)] py-[var(--ds-space-3,0.75rem)] text-[length:var(--ds-text-sm,0.875rem)] outline-none"
+        className="w-full rounded-[var(--ds-radius-sm,0.25rem)] px-[var(--ds-space-3,0.75rem)] py-[var(--ds-space-3,0.75rem)] text-[length:var(--ds-text-sm,0.875rem)] outline-hidden"
         style={{
           background: 'transparent',
           color: 'rgb(var(--ds-foreground))',

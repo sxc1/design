@@ -471,7 +471,7 @@ function ContrastBadge({
 
   return (
     <span
-      className={`shrink-0 rounded px-1.5 py-0.5 text-[11px] font-semibold tabular-nums ${tone}`}
+      className={`shrink-0 rounded-sm px-1.5 py-0.5 text-[11px] font-semibold tabular-nums ${tone}`}
       title={
         ratio ? `WCAG contrast: ${grade} · ${ratio.toFixed(2)}:1` : 'No contrast pair'
       }

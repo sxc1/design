@@ -27,7 +27,7 @@ export function ModeToggle() {
             onClick={() => setMode(opt.value)}
             title={`Switch to ${opt.label.toLowerCase()} mode`}
             className={[
-              'inline-flex items-center gap-1.5 rounded px-2.5 py-1 transition',
+              'inline-flex items-center gap-1.5 rounded-sm px-2.5 py-1 transition',
               active
                 ? 'bg-app-surface text-app-fg shadow-sm'
                 : 'text-app-muted hover:text-app-fg',

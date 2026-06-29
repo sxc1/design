@@ -260,7 +260,7 @@ function Badge({ tone, children }: { tone: BadgeTone; children: React.ReactNode 
 
   return (
     <span
-      className="inline-flex items-center rounded-[var(--ds-radius-full,9999px)] px-[var(--ds-space-2,0.5rem)] py-[var(--ds-space-0\\.5,0.125rem)] text-[length:var(--ds-text-xs,0.75rem)] font-semibold"
+      className="inline-flex items-center rounded-[var(--ds-radius-full,9999px)] px-[var(--ds-space-2,0.5rem)] py-[var(--ds-space-0_5,0.125rem)] text-[length:var(--ds-text-xs,0.75rem)] font-semibold"
       style={style}
     >
       {children}
@@ -374,7 +374,7 @@ function FormFields() {
         <input
           type="email"
           defaultValue="you@example.com"
-          className="rounded-[var(--ds-radius-md,0.375rem)] px-3 py-2 text-[length:var(--ds-text-sm,0.875rem)] outline-none"
+          className="rounded-[var(--ds-radius-md,0.375rem)] px-3 py-2 text-[length:var(--ds-text-sm,0.875rem)] outline-hidden"
           style={{
             background: 'rgb(var(--ds-background))',
             color: 'rgb(var(--ds-foreground))',
@@ -387,7 +387,7 @@ function FormFields() {
         <textarea
           defaultValue="A short bio..."
           rows={3}
-          className="rounded-[var(--ds-radius-md,0.375rem)] px-3 py-2 text-[length:var(--ds-text-sm,0.875rem)] outline-none"
+          className="rounded-[var(--ds-radius-md,0.375rem)] px-3 py-2 text-[length:var(--ds-text-sm,0.875rem)] outline-hidden"
           style={{
             background: 'rgb(var(--ds-background))',
             color: 'rgb(var(--ds-foreground))',
@@ -804,7 +804,7 @@ function CommandPalette() {
         <input
           type="text"
           placeholder="Type a command or search..."
-          className="w-full bg-transparent text-[length:var(--ds-text-sm,0.875rem)] outline-none"
+          className="w-full bg-transparent text-[length:var(--ds-text-sm,0.875rem)] outline-hidden"
           style={{ color: 'rgb(var(--ds-foreground))' }}
         />
       </div>

@@ -162,7 +162,7 @@ export function PreviewNav() {
           placeholder="Search…"
           aria-hidden
           tabIndex={-1}
-          className="hidden w-40 rounded-[var(--ds-radius-md,0.375rem)] px-[var(--ds-space-2,0.5rem)] py-[var(--ds-space-1,0.25rem)] text-[length:var(--ds-text-sm,0.875rem)] outline-none sm:block"
+          className="hidden w-40 rounded-[var(--ds-radius-md,0.375rem)] px-[var(--ds-space-2,0.5rem)] py-[var(--ds-space-1,0.25rem)] text-[length:var(--ds-text-sm,0.875rem)] outline-hidden sm:block"
           style={{
             background: 'rgb(var(--ds-background))',
             color: 'rgb(var(--ds-foreground))',

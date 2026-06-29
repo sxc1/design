@@ -21,7 +21,7 @@ export function ComponentShowcase() {
             <input
               type="email"
               defaultValue="you@example.com"
-              className="rounded-[var(--ds-radius-md,0.375rem)] px-3 py-2 text-[length:var(--ds-text-sm,0.875rem)] outline-none"
+              className="rounded-[var(--ds-radius-md,0.375rem)] px-3 py-2 text-[length:var(--ds-text-sm,0.875rem)] outline-hidden"
               style={{
                 background: 'rgb(var(--ds-background))',
                 color: 'rgb(var(--ds-foreground))',
@@ -34,7 +34,7 @@ export function ComponentShowcase() {
             <textarea
               defaultValue="A short bio..."
               rows={3}
-              className="rounded-[var(--ds-radius-md,0.375rem)] px-3 py-2 text-[length:var(--ds-text-sm,0.875rem)] outline-none"
+              className="rounded-[var(--ds-radius-md,0.375rem)] px-3 py-2 text-[length:var(--ds-text-sm,0.875rem)] outline-hidden"
               style={{
                 background: 'rgb(var(--ds-background))',
                 color: 'rgb(var(--ds-foreground))',
@@ -113,7 +113,7 @@ export function ComponentShowcase() {
               background: 'rgb(var(--ds-muted))',
               color: 'rgb(var(--ds-muted-foreground))',
               padding:
-                'var(--ds-space-0\\.5, 0.125rem) var(--ds-space-2, 0.5rem)',
+                'var(--ds-space-0_5, 0.125rem) var(--ds-space-2, 0.5rem)',
               borderRadius: 'var(--ds-radius-sm, 0.25rem)',
               width: 'fit-content',
             }}
@@ -261,7 +261,7 @@ function Badge({ tone, children }: { tone: BadgeTone; children: React.ReactNode 
 
   return (
     <span
-      className="inline-flex items-center rounded-[var(--ds-radius-full,9999px)] px-[var(--ds-space-2,0.5rem)] py-[var(--ds-space-0\\.5,0.125rem)] text-[length:var(--ds-text-xs,0.75rem)] font-semibold"
+      className="inline-flex items-center rounded-[var(--ds-radius-full,9999px)] px-[var(--ds-space-2,0.5rem)] py-[var(--ds-space-0_5,0.125rem)] text-[length:var(--ds-text-xs,0.75rem)] font-semibold"
       style={style}
     >
       {children}

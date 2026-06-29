@@ -496,7 +496,7 @@ export function ChakraShowcase() {
             </span>
             <input
               defaultValue="Acme Inc."
-              className="rounded-[var(--ds-radius-lg,0.5rem)] px-[var(--ds-space-4,1rem)] py-[var(--ds-space-3,0.75rem)] text-[length:var(--ds-text-base,1rem)] outline-none"
+              className="rounded-[var(--ds-radius-lg,0.5rem)] px-[var(--ds-space-4,1rem)] py-[var(--ds-space-3,0.75rem)] text-[length:var(--ds-text-base,1rem)] outline-hidden"
               style={{
                 background: 'rgb(var(--ds-background))',
                 color: 'rgb(var(--ds-foreground))',
@@ -658,7 +658,7 @@ function CMenuItem({
 function CBadge({ children, subtle }: { children: React.ReactNode; subtle?: boolean }) {
   return (
     <span
-      className="inline-flex items-center rounded-[var(--ds-radius-md,0.375rem)] px-[var(--ds-space-2,0.5rem)] py-[var(--ds-space-0\\.5,0.125rem)]"
+      className="inline-flex items-center rounded-[var(--ds-radius-md,0.375rem)] px-[var(--ds-space-2,0.5rem)] py-[var(--ds-space-0_5,0.125rem)]"
       style={{
         fontSize: 'var(--ds-text-xs, 0.75rem)',
         fontWeight: 'var(--ds-weight-bold, 700)',

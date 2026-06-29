@@ -44,9 +44,9 @@ export function SpacingPanel() {
                 onChange={(e) => setSpacing(key, e.target.value)}
                 className="w-24"
               />
-              <div className="ml-2 flex-1 rounded bg-app-bg">
+              <div className="ml-2 flex-1 rounded-sm bg-app-bg">
                 <div
-                  className="h-3 rounded bg-app-accent"
+                  className="h-3 rounded-sm bg-app-accent"
                   style={{ width: value }}
                 />
               </div>

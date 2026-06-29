@@ -806,7 +806,7 @@ function KendoGrid() {
         <KButton look="outline">Export</KButton>
         <input
           placeholder="Search…"
-          className="ml-auto rounded-[var(--ds-radius-sm,0.25rem)] px-[var(--ds-space-2,0.5rem)] py-[var(--ds-space-1,0.25rem)] text-[length:var(--ds-text-sm,0.875rem)] outline-none"
+          className="ml-auto rounded-[var(--ds-radius-sm,0.25rem)] px-[var(--ds-space-2,0.5rem)] py-[var(--ds-space-1,0.25rem)] text-[length:var(--ds-text-sm,0.875rem)] outline-hidden"
           style={{
             background: 'rgb(var(--ds-background))',
             color: 'rgb(var(--ds-foreground))',
@@ -1000,7 +1000,7 @@ function KField({ label, value }: { label: string; value: string }) {
       </span>
       <input
         defaultValue={value}
-        className="rounded-[var(--ds-radius-sm,0.25rem)] px-[var(--ds-space-3,0.75rem)] py-[var(--ds-space-2,0.5rem)] text-[length:var(--ds-text-sm,0.875rem)] outline-none"
+        className="rounded-[var(--ds-radius-sm,0.25rem)] px-[var(--ds-space-3,0.75rem)] py-[var(--ds-space-2,0.5rem)] text-[length:var(--ds-text-sm,0.875rem)] outline-hidden"
         style={{
           background: 'rgb(var(--ds-background))',
           color: 'rgb(var(--ds-foreground))',

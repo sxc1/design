@@ -1,6 +1,35 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+
+/* The editor uses a class-based dark mode: App.tsx toggles `dark` on <html>.
+   v4 defaults to prefers-color-scheme, so opt back into the class behavior. */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ─── Editor chrome theme ───────────────────────────────────────────────────
+   The tool's own UI palette, kept separate from the design tokens the user is
+   editing. The colors stay as runtime-swappable RGB triplets (see :root /
+   html.dark below) and are mapped into Tailwind's color system with @theme
+   inline, so `bg-app-*`, `text-app-*`, `ring-app-*` — and their /opacity
+   modifiers (resolved via color-mix) — track the live values. Radius and shadow
+   reproduce the old tailwind.config.js `extend` exactly (v4's default shadow-sm
+   differs from v3's, so the scale is pinned here). */
+@theme inline {
+  --color-app-bg: rgb(var(--app-bg));
+  --color-app-surface: rgb(var(--app-surface));
+  --color-app-border: rgb(var(--app-border));
+  --color-app-fg: rgb(var(--app-fg));
+  --color-app-muted: rgb(var(--app-muted));
+  --color-app-accent: rgb(var(--app-accent));
+}
+
+@theme {
+  --radius-sm: 0.25rem;
+  --radius-md: 0.375rem;
+  --radius-lg: 0.5rem;
+  --radius-xl: 0.75rem;
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+}
 
 :root {
   --app-bg: 248 250 252;

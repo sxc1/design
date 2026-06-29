@@ -2,7 +2,7 @@
 
 An interactive React + Vite app for building a design token set — entering
 color candidates, mapping them to semantic roles, tuning typography and
-spacing, and exporting a Tailwind v3 config.
+spacing, and exporting a Tailwind v4 theme.
 
 ## Quick start
 
@@ -37,20 +37,24 @@ State persists to `localStorage` so your work survives a refresh.
 
 ## Export
 
-Clicking **Export Tailwind Config** downloads:
+Clicking **Export Tailwind CSS** downloads a single `tokens.css` for a Tailwind
+v4 (CSS-first) project — v4 has no `tailwind.config.js`:
 
-- `tailwind.config.js` — primitive palettes as `theme.extend.colors.{name}`,
-  semantic roles as CSS-variable references with `<alpha-value>` support,
-  plus typography, spacing, radius, and shadow tokens.
-- `tokens.css` — the CSS custom properties for `:root` (light) and `.dark`,
-  matching the shadcn/ui convention.
+- `@import "tailwindcss";` plus `@custom-variant dark` for class-based dark mode.
+- Primitive palettes under `@theme` as `--color-{name}` / `--color-{name}-{shade}`.
+- Semantic roles and the data palette as per-mode custom properties in `:root`
+  and `.dark`, mapped into the theme with `@theme inline`
+  (`--color-{role}: var(--{role})`) — the shadcn/ui-for-v4 convention.
+- Typography, spacing, radius, and shadow under `@theme` (`--text-*`,
+  `--font-weight-*`, `--leading-*`, `--spacing-*`, `--radius-*`, `--shadow-*`).
 
-Drop both into a Tailwind v3 project and you have a working theme.
+`@import` it from your CSS entry and you have a working theme. Colors are emitted
+as hex; `/<opacity>` modifiers resolve via v4's `color-mix`.
 
 ## Stack
 
 - Vite + React 18 + TypeScript
 - Zustand (with `persist` middleware) for token state
 - Culori for OKLCH color math and contrast checking
-- Tailwind CSS v3 for the app's own styling
+- Tailwind CSS v4 for the app's own styling
 - file-saver for download triggers

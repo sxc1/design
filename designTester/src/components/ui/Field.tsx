@@ -26,7 +26,7 @@ export function TextInput({ invalid, className, ...rest }: InputProps) {
     <input
       {...rest}
       className={[
-        'w-full rounded-md border bg-app-surface px-2.5 py-1.5 text-sm text-app-fg shadow-sm outline-none transition',
+        'w-full rounded-md border bg-app-surface px-2.5 py-1.5 text-sm text-app-fg shadow-sm outline-hidden transition',
         'focus:ring-2 focus:ring-app-accent/40 focus:border-app-accent',
         invalid
           ? 'border-rose-500 focus:border-rose-500 focus:ring-rose-500/30'
@@ -96,7 +96,7 @@ export function HexInput({
         autoCorrect="off"
         onChange={(e) => onChange('#' + e.target.value)}
         className={[
-          'w-full min-w-0 bg-transparent text-app-fg outline-none',
+          'w-full min-w-0 bg-transparent text-app-fg outline-hidden',
           sizeClasses.padXEnd,
           sizeClasses.padY,
           sizeClasses.text,

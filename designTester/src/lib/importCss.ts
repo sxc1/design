@@ -137,27 +137,69 @@ function readSemantics(body: string): Partial<Record<SemanticRoleId, string>> {
   return out;
 }
 
+/** Fold one classified primitive declaration into the slug→entry map. */
+function addPrimitive(
+  primitives: Map<string, PrimitiveEntry>,
+  slug: string,
+  shade: ShadeRef,
+  hex: string,
+): void {
+  const entry = primitives.get(slug) ?? { shades: {} };
+  if (shade === 'base') {
+    entry.base = hex;
+  } else {
+    entry.shades[shade] = hex;
+  }
+  primitives.set(slug, entry);
+}
+
 export function parseCssTokens(css: string): ParsedCssTokens {
-  const hasRoot = css.includes(':root');
-  const hasDark = css.includes('.dark');
+  // Strip comments and statement at-rules before scanning for blocks: both can
+  // contain a bare `.dark` / `:root` (e.g. the v4 export's
+  // `@custom-variant dark (&:where(.dark, .dark *));` and its explanatory
+  // comments) that would otherwise hijack the `.dark { … }` block lookup and
+  // leak light values into the dark map. Block at-rules (@theme, @layer) have
+  // no `;` before their `{`, so they survive.
+  const clean = css
+    .replace(/\/\*[\s\S]*?\*\//g, '')
+    .replace(/@[\w-]+[^;{}]*;/g, '');
+  const hasRoot = clean.includes(':root');
+  const hasDark = clean.includes('.dark');
   // Fall back to treating the whole file as a single light block when it has no
   // recognizable selector wrappers (just a bag of declarations).
-  const lightBody = hasRoot || hasDark ? blockBodies(css, ':root') : css;
-  const darkBody = blockBodies(css, '.dark');
+  const lightBody = hasRoot || hasDark ? blockBodies(clean, ':root') : clean;
+  const darkBody = blockBodies(clean, '.dark');
+  // v4 keeps primitives in `@theme` as --color-{slug}[-{shade}] (the DEFAULT
+  // --color-{slug} is the base). blockBodies captures both `@theme {` and
+  // `@theme inline {` bodies; the inline entries are var() refs that don't parse
+  // to a color, so they're skipped below.
+  const themeBody = blockBodies(clean, '@theme');
 
   const primitives = new Map<string, PrimitiveEntry>();
+
+  // v3 path: unprefixed --{slug}-{shade} / --{slug}-base under :root.
   for (const [name, value] of parseDecls(lightBody)) {
     const c = classify(name);
     if (c?.kind !== 'primitive') continue;
     const hex = cssValueToHex(value);
-    if (!hex) continue;
-    const entry = primitives.get(c.slug) ?? { shades: {} };
-    if (c.shade === 'base') {
-      entry.base = hex;
-    } else {
-      entry.shades[c.shade] = hex;
+    if (hex) addPrimitive(primitives, c.slug, c.shade, hex);
+  }
+
+  // v4 path: --color- prefixed primitives under @theme. Requiring the prefix
+  // stops other namespaces (--spacing-*, --text-*, …) being misread as shades.
+  for (const [name, value] of parseDecls(themeBody)) {
+    if (!name.startsWith('color-')) continue;
+    const rest = name.slice('color-'.length);
+    if (ROLE_IDS.has(rest)) continue; // semantic mapping: --color-{role}: var(--{role})
+    const hex = cssValueToHex(value);
+    if (!hex) continue; // skips the var() refs in @theme inline
+    const c = classify(rest);
+    if (c?.kind === 'primitive') {
+      addPrimitive(primitives, c.slug, c.shade, hex);
+    } else if (c === null) {
+      // DEFAULT --color-{slug} (no shade suffix) → the palette's base color.
+      addPrimitive(primitives, rest, 'base', hex);
     }
-    primitives.set(c.slug, entry);
   }
 
   return {

@@ -433,7 +433,7 @@ function AntTd({
 function Tag({ children }: { children: React.ReactNode }) {
   return (
     <span
-      className="inline-flex items-center rounded-[var(--ds-radius-sm,0.25rem)] px-[var(--ds-space-2,0.5rem)] py-[var(--ds-space-0\\.5,0.125rem)]"
+      className="inline-flex items-center rounded-[var(--ds-radius-sm,0.25rem)] px-[var(--ds-space-2,0.5rem)] py-[var(--ds-space-0_5,0.125rem)]"
       style={{
         fontSize: 'var(--ds-text-xs, 0.75rem)',
         background: 'rgb(var(--ds-accent))',
@@ -464,7 +464,7 @@ function StatusTag({ status }: { status: string }) {
   const c = map[status] ?? map.Running;
   return (
     <span
-      className="inline-flex items-center gap-1 rounded-[var(--ds-radius-sm,0.25rem)] px-[var(--ds-space-2,0.5rem)] py-[var(--ds-space-0\\.5,0.125rem)]"
+      className="inline-flex items-center gap-1 rounded-[var(--ds-radius-sm,0.25rem)] px-[var(--ds-space-2,0.5rem)] py-[var(--ds-space-0_5,0.125rem)]"
       style={{
         fontSize: 'var(--ds-text-xs, 0.75rem)',
         background: c.bg,
@@ -860,7 +860,7 @@ function RibbonCard() {
       }}
     >
       <div
-        className="absolute right-[-2.75rem] top-[0.9rem] w-[9rem] py-[var(--ds-space-0\\.5,0.125rem)] text-center"
+        className="absolute right-[-2.75rem] top-[0.9rem] w-[9rem] py-[var(--ds-space-0_5,0.125rem)] text-center"
         style={{
           transform: 'rotate(45deg)',
           background: 'rgb(var(--ds-primary))',
