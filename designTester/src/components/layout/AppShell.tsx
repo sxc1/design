@@ -152,10 +152,10 @@ export function AppShell() {
       <div className="flex min-h-0">
         <aside
           className={`min-h-0 shrink-0 overflow-hidden border-app-border bg-app-bg transition-[width] duration-300 ease-in-out ${
-            sidebarCollapsed ? 'w-0 border-r-0' : 'w-[max(518px,48%)] border-r'
+            sidebarCollapsed ? 'w-0 border-r-0' : 'w-[max(420px,42%)] border-r'
           }`}
         >
-          <div className="flex h-full w-full min-w-[518px] flex-col">
+          <div className="flex h-full w-full min-w-[420px] flex-col">
             <TabNav active={activeTab} onChange={setActiveTab} />
             <div className="min-h-0 flex-1 overflow-auto p-4">
               {activeTab === 'primitive' ? <PrimitiveColorPanel /> : null}

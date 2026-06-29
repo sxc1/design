@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   resolveSemanticColor,
   useTokenStore,
@@ -11,7 +11,6 @@ import {
 import {
   MAX_DATA_COLORS,
   MIN_DATA_COLORS,
-  SHADE_STEPS,
   type PreviewMode,
   type PrimitivePalette,
   type SemanticReference,
@@ -148,9 +147,12 @@ function DataColorRow({
   const resolved = resolveSemanticColor(reference ?? undefined, palettes);
   const selectedPalette = palettes.find((p) => p.id === reference?.paletteId);
   const canExpand = Boolean(selectedPalette);
+  const shadeRef = useDismiss<HTMLDivElement>(expanded, () =>
+    setExpanded(false),
+  );
 
   return (
-    <div className="flex flex-col gap-1">
+    <div ref={shadeRef} className="flex flex-col gap-1">
       <div className="flex flex-wrap items-center gap-3">
         <div
           className="h-9 w-9 shrink-0 rounded-md border border-app-border shadow-sm"
@@ -173,16 +175,8 @@ function DataColorRow({
           }}
           palettes={palettes}
         />
-        <ShadeSelect
-          disabled={!reference?.paletteId}
+        <ShadeScaleToggle
           value={reference?.shade ?? 500}
-          palette={selectedPalette}
-          onChange={(shade) => {
-            if (!reference?.paletteId) return;
-            setDataColor(mode, index, { paletteId: reference.paletteId, shade });
-          }}
-        />
-        <ExpandToggle
           expanded={expanded}
           disabled={!canExpand}
           onToggle={() => setExpanded((v) => !v)}
@@ -232,9 +226,12 @@ function SemanticRow({
 
   const selectedPalette = palettes.find((p) => p.id === reference?.paletteId);
   const canExpand = Boolean(selectedPalette);
+  const shadeRef = useDismiss<HTMLDivElement>(expanded, () =>
+    setExpanded(false),
+  );
 
   return (
-    <div className="flex flex-col gap-1">
+    <div ref={shadeRef} className="flex flex-col gap-1">
       <div className="flex flex-wrap items-center gap-3">
         <div
           className="h-9 w-9 shrink-0 rounded-md border border-app-border shadow-sm"
@@ -258,21 +255,13 @@ function SemanticRow({
           }}
           palettes={palettes}
         />
-        <ShadeSelect
-          disabled={!reference?.paletteId}
+        <ShadeScaleToggle
           value={reference?.shade ?? 500}
-          palette={selectedPalette}
-          onChange={(shade) => {
-            if (!reference?.paletteId) return;
-            setSemantic(mode, role.id, { paletteId: reference.paletteId, shade });
-          }}
-        />
-        {grade ? <ContrastBadge ratio={ratio} grade={grade} /> : null}
-        <ExpandToggle
           expanded={expanded}
           disabled={!canExpand}
           onToggle={() => setExpanded((v) => !v)}
         />
+        {grade ? <ContrastBadge ratio={ratio} grade={grade} /> : null}
       </div>
 
       {expanded && selectedPalette ? (
@@ -291,11 +280,50 @@ function SemanticRow({
   );
 }
 
-function ExpandToggle({
+// Dismiss the open shade strip on Escape or a click/tap outside the row,
+// giving it lightweight modal-style behavior. The latest onDismiss is read
+// from a ref so the listeners only re-subscribe when `enabled` flips, and the
+// toggle button (inside the ref) keeps its own open/close handling without a
+// double-fire from the outside-click listener.
+function useDismiss<T extends HTMLElement>(
+  enabled: boolean,
+  onDismiss: () => void,
+) {
+  const ref = useRef<T>(null);
+  const onDismissRef = useRef(onDismiss);
+  onDismissRef.current = onDismiss;
+
+  useEffect(() => {
+    if (!enabled) return;
+    const handlePointer = (event: MouseEvent) => {
+      if (ref.current && !ref.current.contains(event.target as Node)) {
+        onDismissRef.current();
+      }
+    };
+    const handleKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') onDismissRef.current();
+    };
+    document.addEventListener('mousedown', handlePointer);
+    document.addEventListener('keydown', handleKey);
+    return () => {
+      document.removeEventListener('mousedown', handlePointer);
+      document.removeEventListener('keydown', handleKey);
+    };
+  }, [enabled]);
+
+  return ref;
+}
+
+// Combined shade value + show/hide scale control. Displays the current shade
+// and toggles the PaletteShadeStrip, which is itself the shade picker — so the
+// strip replaces a separate shade dropdown.
+function ShadeScaleToggle({
+  value,
   expanded,
   disabled,
   onToggle,
 }: {
+  value: ShadeRef;
   expanded: boolean;
   disabled?: boolean;
   onToggle: () => void;
@@ -306,20 +334,21 @@ function ExpandToggle({
       disabled={disabled}
       onClick={onToggle}
       aria-expanded={expanded}
-      aria-label={expanded ? 'Hide shade scale' : 'Show shade scale'}
+      aria-label={expanded ? 'Hide shade scale' : 'Choose shade'}
       title={
         disabled
           ? 'Assign a palette first'
           : expanded
             ? 'Hide shade scale'
-            : 'Show shade scale'
+            : 'Choose shade'
       }
-      className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md border border-app-border bg-app-surface text-app-muted shadow-sm transition hover:bg-app-bg hover:text-app-fg disabled:cursor-not-allowed disabled:opacity-40"
+      className="inline-flex min-w-[72px] shrink-0 items-center justify-between gap-1.5 rounded-md border border-app-border bg-app-surface px-2 py-1 text-sm text-app-fg shadow-sm transition hover:bg-app-bg disabled:cursor-not-allowed disabled:opacity-50"
     >
+      <span className="tabular-nums">{value}</span>
       <span
         aria-hidden
         className={[
-          'inline-block text-xs leading-none transition-transform duration-150',
+          'inline-block text-xs leading-none text-app-muted transition-transform duration-150',
           expanded ? 'rotate-180' : '',
         ].join(' ')}
       >
@@ -339,10 +368,36 @@ function PaletteShadeStrip({
   onPick: (shade: ShadeRef) => void;
 }) {
   const entries = paletteShadeEntries(palette);
+
+  // Step the active shade with ←/→ while the strip is open. The latest values
+  // are read from a ref so the document listener subscribes once per open
+  // (the strip only mounts while expanded). Form controls keep their native
+  // arrow behavior. Movement clamps at the ends — no wraparound.
+  const navRef = useRef({ entries, activeShade, onPick });
+  navRef.current = { entries, activeShade, onPick };
+  useEffect(() => {
+    const handleKey = (event: KeyboardEvent) => {
+      if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return;
+      const tag = (event.target as HTMLElement | null)?.tagName;
+      if (tag === 'INPUT' || tag === 'SELECT' || tag === 'TEXTAREA') return;
+      const { entries, activeShade, onPick } = navRef.current;
+      if (entries.length === 0) return;
+      const dir = event.key === 'ArrowRight' ? 1 : -1;
+      const idx = entries.findIndex((e) => e.shade === activeShade);
+      const start = idx === -1 ? (dir === 1 ? -1 : entries.length) : idx;
+      const next = Math.min(Math.max(start + dir, 0), entries.length - 1);
+      if (next === idx) return;
+      event.preventDefault();
+      onPick(entries[next].shade);
+    };
+    document.addEventListener('keydown', handleKey);
+    return () => document.removeEventListener('keydown', handleKey);
+  }, []);
+
   return (
     <div className="mt-2 ml-12 rounded-md border border-app-border bg-app-bg p-2">
       <div className="mb-1 text-[11px] font-medium text-app-muted">
-        {palette.name} scale — click a shade to assign
+        {palette.name} scale — click a shade or use ← → to assign
       </div>
       <div className="grid grid-cols-12 gap-1">
         {entries.map(({ shade, color }) => {
@@ -400,40 +455,6 @@ function PaletteSelect({
   );
 }
 
-function ShadeSelect({
-  value,
-  onChange,
-  disabled,
-  palette,
-}: {
-  value: ShadeRef;
-  onChange: (s: ShadeRef) => void;
-  disabled?: boolean;
-  palette?: PrimitivePalette;
-}) {
-  // With a palette selected, offer the base color slotted in by lightness;
-  // otherwise fall back to the bare 50…950 steps.
-  const options: ShadeRef[] = palette
-    ? paletteShadeEntries(palette).map((e) => e.shade)
-    : [...SHADE_STEPS];
-  return (
-    <select
-      disabled={disabled}
-      value={String(value)}
-      onChange={(e) =>
-        onChange(e.target.value === 'base' ? 'base' : (Number(e.target.value) as ShadeRef))
-      }
-      className="rounded-md border border-app-border bg-app-surface px-2 py-1 text-sm text-app-fg disabled:opacity-50"
-    >
-      {options.map((s) => (
-        <option key={s} value={String(s)}>
-          {s}
-        </option>
-      ))}
-    </select>
-  );
-}
-
 function ContrastBadge({
   ratio,
   grade,
@@ -450,11 +471,12 @@ function ContrastBadge({
 
   return (
     <span
-      className={`shrink-0 rounded px-1.5 py-0.5 text-[11px] font-semibold ${tone}`}
-      title={ratio ? `${ratio.toFixed(2)}:1` : 'No contrast pair'}
+      className={`shrink-0 rounded px-1.5 py-0.5 text-[11px] font-semibold tabular-nums ${tone}`}
+      title={
+        ratio ? `WCAG contrast: ${grade} · ${ratio.toFixed(2)}:1` : 'No contrast pair'
+      }
     >
-      {grade}
-      {ratio ? ` · ${ratio.toFixed(1)}` : ''}
+      {ratio ? ratio.toFixed(1) : '—'}
     </span>
   );
 }
