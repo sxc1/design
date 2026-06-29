@@ -17,13 +17,6 @@ function slugifyName(name: string): string {
   );
 }
 
-// A literal dot is not valid in a CSS custom-property name, so a scale key like
-// `0.5` is escaped to `--spacing-0\.5`. Tailwind v4 still emits the matching
-// `p-0.5` utility, and it mirrors the `--ds-space-0\.5` form the preview uses.
-function escapeKey(key: string): string {
-  return key.replace(/\./g, '\\.');
-}
-
 export interface ExportResult {
   css: string;
 }
@@ -87,14 +80,20 @@ export function exportTailwindV4(state: TokenState): ExportResult {
     `  --font-serif: ${state.typography.fontFamilySerif};`,
     `  --font-mono: ${state.typography.fontFamilyMono};`,
   ];
+  // A dotted key can't be a v4 `@theme` token name — the name *is* the utility,
+  // and escaped dots trip up Lightning CSS (same reason spacing derives
+  // fractional steps from `--spacing` below). Font sizes have no multiplier base
+  // to fall back on, so a dotted key is skipped; the default scale has none, and
+  // only `fontSize` is user-extensible (weight/line-height keys are fixed).
   for (const [k, v] of Object.entries(state.typography.fontSizeScale)) {
-    fontLines.push(`  --text-${escapeKey(k)}: ${v};`);
+    if (k.includes('.')) continue;
+    fontLines.push(`  --text-${k}: ${v};`);
   }
   for (const [k, v] of Object.entries(state.typography.fontWeightScale)) {
-    fontLines.push(`  --font-weight-${escapeKey(k)}: ${v};`);
+    fontLines.push(`  --font-weight-${k}: ${v};`);
   }
   for (const [k, v] of Object.entries(state.typography.lineHeightScale)) {
-    fontLines.push(`  --leading-${escapeKey(k)}: ${v};`);
+    fontLines.push(`  --leading-${k}: ${v};`);
   }
 
   // ── Spacing / radius / shadow (static) ──
@@ -110,10 +109,10 @@ export function exportTailwindV4(state: TokenState): ExportResult {
     spacingLines.push(`  --spacing-${k}: ${v};`);
   }
   const radiusLines = Object.entries(HARDCODED_RADIUS).map(
-    ([k, v]) => `  --radius-${escapeKey(k)}: ${v};`,
+    ([k, v]) => `  --radius-${k}: ${v};`,
   );
   const shadowLines = Object.entries(HARDCODED_SHADOWS).map(
-    ([k, v]) => `  --shadow-${escapeKey(k)}: ${v};`,
+    ([k, v]) => `  --shadow-${k}: ${v};`,
   );
 
   // ── Assemble ──
