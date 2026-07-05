@@ -291,6 +291,60 @@ function buildSxc1State(prev: TokenState): TokenState {
   const brand = byName.get(SXC1_SEMANTIC_PICKS.brand)!;
   const neutral = byName.get(SXC1_SEMANTIC_PICKS.neutral)!;
   const destructive = byName.get(SXC1_SEMANTIC_PICKS.destructive)!;
+  const semantic = buildDefaultSemantics([brand, neutral, destructive]);
+  const surfaceNeutral = byName.get('neutral') ?? neutral;
+  const sxc1Primary = byName.get('exp-9') ?? brand;
+  const sxc1Foreground = byName.get('inkBlack') ?? neutral;
+  const sxc1Secondary = byName.get('inkBlack') ?? neutral;
+  const sxc1Destructive = byName.get('strawberryRed') ?? destructive;
+
+  // Lock SXC1 surface defaults to the finalized picks from FINAL.md.
+  semantic.light = {
+    ...semantic.light,
+    background: ref(surfaceNeutral.id, 50),
+    foreground: ref(surfaceNeutral.id, 900),
+    card: ref(surfaceNeutral.id, 50),
+    'card-foreground': ref(surfaceNeutral.id, 900),
+    primary: ref(sxc1Primary.id, 600),
+    'primary-foreground': ref(sxc1Foreground.id, 50),
+    secondary: ref(sxc1Secondary.id, 100),
+    'secondary-foreground': ref(sxc1Secondary.id, 900),
+    muted: ref(surfaceNeutral.id, 100),
+    'muted-foreground': ref(sxc1Foreground.id, 600),
+    accent: ref(sxc1Primary.id, 100),
+    'accent-foreground': ref(sxc1Primary.id, 900),
+    destructive: ref(sxc1Destructive.id, 600),
+    'destructive-foreground': ref(sxc1Foreground.id, 50),
+    border: ref(sxc1Foreground.id, 200),
+    input: ref(sxc1Foreground.id, 200),
+    ring: ref(sxc1Primary.id, 500),
+  };
+  semantic.dark = {
+    ...semantic.dark,
+    background: ref(surfaceNeutral.id, 950),
+    foreground: ref(surfaceNeutral.id, 50),
+    card: ref(surfaceNeutral.id, 900),
+    'card-foreground': ref(surfaceNeutral.id, 50),
+    secondary: ref(sxc1Secondary.id, 800),
+    'secondary-foreground': ref(sxc1Secondary.id, 50),
+  };
+
+  return {
+    ...prev,
+    palettes,
+    semantic,
+    data: buildDefaultData(byName),
+  };
+}
+
+function buildExpState(prev: TokenState): TokenState {
+  const { palettes, byName } = mergePresetPalettes(prev.palettes, [
+    ...BASIC_NEUTRAL_PRESET,
+    ...SXC1_PRESET,
+  ]);
+  const brand = byName.get(SXC1_SEMANTIC_PICKS.brand)!;
+  const neutral = byName.get(SXC1_SEMANTIC_PICKS.neutral)!;
+  const destructive = byName.get(SXC1_SEMANTIC_PICKS.destructive)!;
   return {
     ...prev,
     palettes,
@@ -594,7 +648,7 @@ export const useTokenStore = create<TokenStore>()(
         }),
 
       loadSxc1Preset: () => set((state) => buildSxc1State(state)),
-      loadExpPreset: () => set((state) => buildSxc1State(state)),
+      loadExpPreset: () => set((state) => buildExpState(state)),
 
       importFromCss: (css) => {
         const result = importCssTokens(css, get());
