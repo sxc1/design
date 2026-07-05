@@ -53,6 +53,13 @@ export const SEMANTIC_ROLES: SemanticRoleDescriptor[] = [
     group: 'primary',
   },
   {
+    id: 'primary-alt',
+    label: 'Primary Alternate',
+    description: 'Alternate brand action color.',
+    pairedWith: 'primary-foreground',
+    group: 'primary',
+  },
+  {
     id: 'primary-foreground',
     label: 'Primary Foreground',
     description: 'Text on primary surfaces.',

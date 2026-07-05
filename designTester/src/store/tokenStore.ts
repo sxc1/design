@@ -228,6 +228,7 @@ function buildDefaultSemantics(palettes: PrimitivePalette[]): {
     'card-foreground': ref(neutral.id, 900),
     primary: ref(brand.id, 600),
     'primary-foreground': ref(neutral.id, 50),
+    'primary-alt': ref(brand.id, 600),
     secondary: ref(neutral.id, 100),
     'secondary-foreground': ref(neutral.id, 900),
     muted: ref(neutral.id, 100),
@@ -248,6 +249,7 @@ function buildDefaultSemantics(palettes: PrimitivePalette[]): {
     'card-foreground': ref(neutral.id, 50),
     primary: ref(brand.id, 500),
     'primary-foreground': ref(neutral.id, 950),
+    'primary-alt': ref(brand.id, 500),
     secondary: ref(neutral.id, 800),
     'secondary-foreground': ref(neutral.id, 50),
     muted: ref(neutral.id, 800),
@@ -310,6 +312,7 @@ function buildSxc1State(prev: TokenState): TokenState {
   const sxc1Secondary = byName.get('inkBlack') ?? neutral;
   const sxc1Destructive = byName.get('strawberryRed') ?? destructive;
   const sxc1Warning = byName.get('amberOrange') ?? destructive;
+  const sxc1PrimaryAlt = byName.get('exp-7') ?? brand;
 
   // Lock SXC1 surface defaults to the finalized picks from FINAL.md.
   semantic.light = {
@@ -320,6 +323,7 @@ function buildSxc1State(prev: TokenState): TokenState {
     'card-foreground': ref(surfaceNeutral.id, 900),
     primary: ref(sxc1Primary.id, 600),
     'primary-foreground': ref(sxc1Foreground.id, 50),
+    'primary-alt': ref(sxc1PrimaryAlt.id, 500),
     secondary: ref(sxc1Secondary.id, 100),
     'secondary-foreground': ref(sxc1Secondary.id, 900),
     muted: ref(surfaceNeutral.id, 100),
@@ -340,6 +344,8 @@ function buildSxc1State(prev: TokenState): TokenState {
     foreground: ref(surfaceNeutral.id, 50),
     card: ref(surfaceNeutral.id, 900),
     'card-foreground': ref(surfaceNeutral.id, 50),
+    primary: ref(sxc1Primary.id, 400),
+    'primary-alt': ref(sxc1PrimaryAlt.id, 'base'),
     secondary: ref(sxc1Secondary.id, 800),
     'secondary-foreground': ref(sxc1Secondary.id, 50),
     warning: ref(sxc1Warning.id, 'base'),
@@ -365,13 +371,18 @@ function buildExpState(prev: TokenState): TokenState {
   const semantic = buildDefaultSemantics([brand, neutral, destructive]);
   const expWarning = byName.get('amberOrange') ?? destructive;
   const expForeground = byName.get('inkBlack') ?? neutral;
+  const expPrimaryAlt = byName.get('exp-7') ?? brand;
+  const expPrimary = byName.get('exp-9') ?? brand;
   semantic.light = {
     ...semantic.light,
+    'primary-alt': ref(expPrimaryAlt.id, 500),
     warning: ref(expWarning.id, 'base'),
     'warning-foreground': ref(expForeground.id, 950),
   };
   semantic.dark = {
     ...semantic.dark,
+    primary: ref(expPrimary.id, 400),
+    'primary-alt': ref(expPrimaryAlt.id, 'base'),
     warning: ref(expWarning.id, 'base'),
     'warning-foreground': ref(expForeground.id, 950),
   };
@@ -411,6 +422,7 @@ export interface TokenActions {
     reference: SemanticReference,
   ) => void;
   clearSemantic: (mode: PreviewMode, role: SemanticRoleId) => void;
+  swapSemantics: (mode: PreviewMode, roleA: SemanticRoleId, roleB: SemanticRoleId) => void;
 
   setDataColor: (
     mode: PreviewMode,
@@ -536,6 +548,17 @@ export const useTokenStore = create<TokenStore>()(
         set((state) => {
           const next = { ...state.semantic[mode] };
           delete next[role];
+          return { semantic: { ...state.semantic, [mode]: next } };
+        }),
+
+      swapSemantics: (mode, roleA, roleB) =>
+        set((state) => {
+          const map = state.semantic[mode];
+          const a = map[roleA];
+          const b = map[roleB];
+          const next = { ...map };
+          if (a) next[roleB] = a; else delete next[roleB];
+          if (b) next[roleA] = b; else delete next[roleA];
           return { semantic: { ...state.semantic, [mode]: next } };
         }),
 
@@ -689,10 +712,11 @@ export const useTokenStore = create<TokenStore>()(
     }),
     {
       name: 'design-token-selector',
-      version: 5,
+      version: 7,
       // v2 sorts palettes by color; v3 introduced the qualitative data palette;
       // v4 gives it distinct light/dark defaults; v5 adds the Warning semantic
-      // set, so seed a warning palette + refs when below v5.
+      // set; v6 adds Primary Alternate; v7 corrects primary-alt shades and
+      // pins dark primary to exp-9.400 for SXC1/EXP themes.
       migrate: (persisted, version) => {
         const state = persisted as Partial<TokenState> | undefined;
         if (state) {
@@ -743,6 +767,45 @@ export const useTokenStore = create<TokenStore>()(
                 }
                 if (!map['warning-foreground'] && neutral) {
                   map['warning-foreground'] = { paletteId: neutral.id, shade: 950 };
+                }
+              }
+            }
+          }
+          // v6: seed Primary Alternate. Use exp-7 (SXC1/EXP) or copy the
+          // existing primary (Basic / generic). No foreground token.
+          if (version < 6 && state.semantic) {
+            const existing = Array.isArray(state.palettes) ? state.palettes : [];
+            const exp7 = existing.find((p) => p.name === 'exp-7');
+            for (const mode of ['light', 'dark'] as const) {
+              const map = state.semantic[mode];
+              if (!map) continue;
+              if (!map['primary-alt']) {
+                if (exp7) {
+                  map['primary-alt'] = { paletteId: exp7.id, shade: 400 };
+                } else if (map.primary) {
+                  map['primary-alt'] = { ...map.primary };
+                }
+              }
+            }
+          }
+          // v7: correct primary-alt shades (light 400→500, dark 400→base) and
+          // pin dark primary to exp-9.400 for SXC1/EXP themes.
+          if (version < 7 && state.semantic) {
+            const existing = Array.isArray(state.palettes) ? state.palettes : [];
+            const exp7 = existing.find((p) => p.name === 'exp-7');
+            const exp9 = existing.find((p) => p.name === 'exp-9');
+            if (exp7) {
+              const lightMap = state.semantic.light;
+              if (lightMap?.['primary-alt']?.paletteId === exp7.id) {
+                lightMap['primary-alt'] = { paletteId: exp7.id, shade: 500 };
+              }
+              const darkMap = state.semantic.dark;
+              if (darkMap) {
+                if (darkMap['primary-alt']?.paletteId === exp7.id) {
+                  darkMap['primary-alt'] = { paletteId: exp7.id, shade: 'base' };
+                }
+                if (exp9) {
+                  darkMap.primary = { paletteId: exp9.id, shade: 400 };
                 }
               }
             }

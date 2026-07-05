@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   resolveSemanticColor,
   useTokenStore,
@@ -54,7 +54,16 @@ export function SemanticColorPanel() {
           </h3>
           <div className="flex flex-col gap-3">
             {roles.map((role) => (
-              <SemanticRow key={role.id} role={role} mode={previewMode} />
+              <SemanticRow
+                key={role.id}
+                role={role}
+                mode={previewMode}
+                swapWith={
+                  role.id === 'primary' ? 'primary-alt'
+                  : role.id === 'primary-alt' ? 'primary'
+                  : undefined
+                }
+              />
             ))}
           </div>
         </section>
@@ -202,14 +211,17 @@ function DataColorRow({
 function SemanticRow({
   role,
   mode,
+  swapWith,
 }: {
   role: SemanticRoleDescriptor;
   mode: PreviewMode;
+  swapWith?: SemanticRoleId;
 }) {
   const palettes = useTokenStore((s) => s.palettes);
   const reference = useTokenStore((s) => s.semantic[mode][role.id]);
   const setSemantic = useTokenStore((s) => s.setSemantic);
   const clearSemantic = useTokenStore((s) => s.clearSemantic);
+  const swapSemantics = useTokenStore((s) => s.swapSemantics);
 
   const [expanded, setExpanded] = useState(false);
 
@@ -230,13 +242,34 @@ function SemanticRow({
     setExpanded(false),
   );
 
+  const handleSwap = useCallback(() => {
+    if (swapWith) swapSemantics(mode, role.id, swapWith);
+  }, [swapSemantics, mode, role.id, swapWith]);
+
   return (
     <div ref={shadeRef} className="flex flex-col gap-1">
       <div className="flex flex-wrap items-center gap-3">
-        <div
-          className="h-9 w-9 shrink-0 rounded-md border border-app-border shadow-sm"
-          style={{ background: resolved ?? 'transparent' }}
-        />
+        {swapWith ? (
+          <button
+            type="button"
+            onClick={handleSwap}
+            title={`Swap ${role.label} ↔ ${swapWith}`}
+            className="group relative h-9 w-9 shrink-0 rounded-md border border-app-border shadow-sm transition hover:border-app-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-app-accent"
+            style={{ background: resolved ?? 'transparent' }}
+          >
+            <span
+              aria-hidden
+              className="absolute inset-0 flex items-center justify-center opacity-0 transition-opacity group-hover:opacity-100"
+            >
+              <SwapIcon />
+            </span>
+          </button>
+        ) : (
+          <div
+            className="h-9 w-9 shrink-0 rounded-md border border-app-border shadow-sm"
+            style={{ background: resolved ?? 'transparent' }}
+          />
+        )}
         <div className="min-w-[150px] flex-1">
           <div className="text-sm font-medium text-app-fg">{role.label}</div>
           <div className="text-xs text-app-muted">{role.description}</div>
@@ -478,6 +511,28 @@ function ContrastBadge({
     >
       {ratio ? ratio.toFixed(1) : '—'}
     </span>
+  );
+}
+
+function SwapIcon() {
+  return (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 16 16"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      style={{ filter: 'drop-shadow(0 1px 1px rgba(0,0,0,0.5))' }}
+    >
+      <path
+        d="M5 3L2 6h2.5v7h1V6H8L5 3Z"
+        fill="white"
+      />
+      <path
+        d="M11 13l3-3h-2.5V3h-1v7H8l3 3Z"
+        fill="white"
+      />
+    </svg>
   );
 }
 

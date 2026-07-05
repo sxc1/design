@@ -28,6 +28,7 @@ export type SemanticRoleId =
   | 'card-foreground'
   | 'primary'
   | 'primary-foreground'
+  | 'primary-alt'
   | 'secondary'
   | 'secondary-foreground'
   | 'muted'

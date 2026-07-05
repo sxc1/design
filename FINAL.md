@@ -13,6 +13,7 @@ Use this checklist to lock in final semantic assignments for both modes.
 ### Primary
 - [x] Primary (`primary`) — palette: `exp-9` shade: `600`
 - [x] Primary Foreground (`primary-foreground`) — palette: `inkBlack` shade: `50`
+- [x] Primary Alternate (`primary-alt`) — palette: `exp-7` shade: `500` (SXC1/EXP); Basic copies `primary`
 
 ### Secondary
 - [x] Secondary (`secondary`) — palette: `inkBlack` shade: `100`
@@ -29,6 +30,10 @@ Use this checklist to lock in final semantic assignments for both modes.
 ### Destructive
 - [x] Destructive (`destructive`) — palette: `strawberryRed` shade: `600`
 - [x] Destructive Foreground (`destructive-foreground`) — palette: `inkBlack` shade: `50`
+
+### Warning
+- [x] Warning (`warning`) — palette: `amberOrange` shade: `base` (SXC1/EXP); Basic auto-generates an amber `warning` palette (`#f59e0b`) at shade `base`
+- [x] Warning Foreground (`warning-foreground`) — palette: `inkBlack` shade: `950` (SXC1/EXP); Basic uses `neutral` shade `950`
 
 ### Utility
 - [x] Border (`border`) — palette: `inkBlack` shade: `200`
@@ -54,8 +59,9 @@ Use this checklist to lock in final semantic assignments for both modes.
 - [x] Card Foreground (`card-foreground`) — palette: `neutral` shade: `50`
 
 ### Primary
-- [ ] Primary (`primary`) — palette: `____` shade: `____`
+- [x] Primary (`primary`) — palette: `exp-9` shade: `400` (SXC1/EXP)
 - [ ] Primary Foreground (`primary-foreground`) — palette: `____` shade: `____`
+- [x] Primary Alternate (`primary-alt`) — palette: `exp-7` shade: `base` (SXC1/EXP); Basic copies `primary`
 
 ### Secondary
 - [x] Secondary (`secondary`) — palette: `inkBlack` shade: `800`
@@ -72,6 +78,10 @@ Use this checklist to lock in final semantic assignments for both modes.
 ### Destructive
 - [ ] Destructive (`destructive`) — palette: `____` shade: `____`
 - [ ] Destructive Foreground (`destructive-foreground`) — palette: `____` shade: `____`
+
+### Warning
+- [x] Warning (`warning`) — palette: `amberOrange` shade: `base` (SXC1/EXP); Basic auto-generates an amber `warning` palette (`#f59e0b`) at shade `base`
+- [x] Warning Foreground (`warning-foreground`) — palette: `inkBlack` shade: `950` (SXC1/EXP); Basic uses `neutral` shade `950`
 
 ### Utility
 - [ ] Border (`border`) — palette: `____` shade: `____`
