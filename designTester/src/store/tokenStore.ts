@@ -96,6 +96,8 @@ const DEFAULT_PALETTES: PrimitivePalette[] = [
   buildPalette('brand', '#3b82f6'),
   buildPalette('neutral', '#64748b'),
   buildPalette('destructive', '#ef4444'),
+  // Auto-generated amber warning color for the Basic theme.
+  buildPalette('warning', '#f59e0b'),
 ];
 const BASIC_NEUTRAL_PRESET = [{ name: 'neutral', baseColor: '#64748b' }] as const;
 
@@ -215,6 +217,9 @@ function buildDefaultSemantics(palettes: PrimitivePalette[]): {
   const brand = palettes[0];
   const neutral = palettes[1];
   const destructive = palettes[2];
+  // Optional 4th palette (Basic). SXC1/EXP call this with only 3 palettes and
+  // set warning themselves, so guard against it being absent.
+  const warning = palettes[3];
 
   const light: SemanticMap = {
     background: ref(neutral.id, 50),
@@ -255,6 +260,13 @@ function buildDefaultSemantics(palettes: PrimitivePalette[]): {
     input: ref(neutral.id, 800),
     ring: ref(brand.id, 400),
   };
+
+  if (warning) {
+    light.warning = ref(warning.id, 'base');
+    light['warning-foreground'] = ref(neutral.id, 950);
+    dark.warning = ref(warning.id, 'base');
+    dark['warning-foreground'] = ref(neutral.id, 950);
+  }
 
   return { light, dark };
 }
@@ -297,6 +309,7 @@ function buildSxc1State(prev: TokenState): TokenState {
   const sxc1Foreground = byName.get('inkBlack') ?? neutral;
   const sxc1Secondary = byName.get('inkBlack') ?? neutral;
   const sxc1Destructive = byName.get('strawberryRed') ?? destructive;
+  const sxc1Warning = byName.get('amberOrange') ?? destructive;
 
   // Lock SXC1 surface defaults to the finalized picks from FINAL.md.
   semantic.light = {
@@ -315,6 +328,8 @@ function buildSxc1State(prev: TokenState): TokenState {
     'accent-foreground': ref(sxc1Primary.id, 900),
     destructive: ref(sxc1Destructive.id, 600),
     'destructive-foreground': ref(sxc1Foreground.id, 50),
+    warning: ref(sxc1Warning.id, 'base'),
+    'warning-foreground': ref(sxc1Foreground.id, 950),
     border: ref(sxc1Foreground.id, 200),
     input: ref(sxc1Foreground.id, 200),
     ring: ref(sxc1Primary.id, 500),
@@ -327,6 +342,8 @@ function buildSxc1State(prev: TokenState): TokenState {
     'card-foreground': ref(surfaceNeutral.id, 50),
     secondary: ref(sxc1Secondary.id, 800),
     'secondary-foreground': ref(sxc1Secondary.id, 50),
+    warning: ref(sxc1Warning.id, 'base'),
+    'warning-foreground': ref(sxc1Foreground.id, 950),
   };
 
   return {
@@ -345,10 +362,23 @@ function buildExpState(prev: TokenState): TokenState {
   const brand = byName.get(SXC1_SEMANTIC_PICKS.brand)!;
   const neutral = byName.get(SXC1_SEMANTIC_PICKS.neutral)!;
   const destructive = byName.get(SXC1_SEMANTIC_PICKS.destructive)!;
+  const semantic = buildDefaultSemantics([brand, neutral, destructive]);
+  const expWarning = byName.get('amberOrange') ?? destructive;
+  const expForeground = byName.get('inkBlack') ?? neutral;
+  semantic.light = {
+    ...semantic.light,
+    warning: ref(expWarning.id, 'base'),
+    'warning-foreground': ref(expForeground.id, 950),
+  };
+  semantic.dark = {
+    ...semantic.dark,
+    warning: ref(expWarning.id, 'base'),
+    'warning-foreground': ref(expForeground.id, 950),
+  };
   return {
     ...prev,
     palettes,
-    semantic: buildDefaultSemantics([brand, neutral, destructive]),
+    semantic,
     data: buildDefaultData(byName),
   };
 }
@@ -659,9 +689,10 @@ export const useTokenStore = create<TokenStore>()(
     }),
     {
       name: 'design-token-selector',
-      version: 4,
+      version: 5,
       // v2 sorts palettes by color; v3 introduced the qualitative data palette;
-      // v4 gives it distinct light/dark defaults, so re-seed when below v4.
+      // v4 gives it distinct light/dark defaults; v5 adds the Warning semantic
+      // set, so seed a warning palette + refs when below v5.
       migrate: (persisted, version) => {
         const state = persisted as Partial<TokenState> | undefined;
         if (state) {
@@ -684,6 +715,37 @@ export const useTokenStore = create<TokenStore>()(
             );
             state.palettes = palettes;
             state.data = buildDefaultData(byName);
+          }
+          // v5: seed the Warning semantic set. Reuse amberOrange when present
+          // (SXC1/EXP), otherwise merge in an auto-generated amber warning
+          // palette (Basic). Both use shade 'base'.
+          if (version < 5) {
+            const existing = Array.isArray(state.palettes) ? state.palettes : [];
+            const neutral =
+              existing.find((p) => p.name === 'inkBlack') ??
+              existing.find((p) => p.name === 'neutral');
+            let warningPalette =
+              existing.find((p) => p.name === 'amberOrange') ??
+              existing.find((p) => p.name === 'warning');
+            if (!warningPalette) {
+              const merged = mergePresetPalettes(existing, [
+                { name: 'warning', baseColor: '#f59e0b' },
+              ]);
+              state.palettes = merged.palettes;
+              warningPalette = merged.byName.get('warning');
+            }
+            if (warningPalette && state.semantic) {
+              for (const mode of ['light', 'dark'] as const) {
+                const map = state.semantic[mode];
+                if (!map) continue;
+                if (!map.warning) {
+                  map.warning = { paletteId: warningPalette.id, shade: 'base' };
+                }
+                if (!map['warning-foreground'] && neutral) {
+                  map['warning-foreground'] = { paletteId: neutral.id, shade: 950 };
+                }
+              }
+            }
           }
         }
         return state as TokenStore;

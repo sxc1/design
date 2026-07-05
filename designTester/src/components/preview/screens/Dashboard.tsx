@@ -19,10 +19,10 @@ const ROWS = [
   { name: 'Search Index', env: 'prod', status: 'Stopped', cpu: '0%' },
 ];
 
-const ALERTS: { kind: 'info' | 'success' | 'warning' | 'error'; text: string }[] = [
+const ALERTS: { kind: 'secondary' | 'success' | 'warning' | 'error'; text: string }[] = [
   { kind: 'success', text: 'Deployment to prod-us-1 completed successfully.' },
   { kind: 'error', text: 'Billing Worker CPU has been above 75% for 10 min.' },
-  { kind: 'info', text: 'A new platform version is available — review changelog.' },
+  { kind: 'secondary', text: 'A new platform version is available — review changelog.' },
 ];
 
 const TABS = ['Overview', 'Metrics', 'Logs', 'Settings'];
@@ -390,7 +390,7 @@ function Tag({ children }: { children: React.ReactNode }) {
 function StatusTag({ status }: { status: string }) {
   const map: Record<string, { bg: string; fg: string }> = {
     Running: { bg: 'rgb(var(--ds-accent))', fg: 'rgb(var(--ds-accent-foreground))' },
-    Degraded: { bg: 'rgb(var(--ds-secondary))', fg: 'rgb(var(--ds-secondary-foreground))' },
+    Degraded: { bg: 'rgb(var(--ds-warning))', fg: 'rgb(var(--ds-warning-foreground))' },
     Stopped: { bg: 'rgb(var(--ds-destructive))', fg: 'rgb(var(--ds-destructive-foreground))' },
   };
   const c = map[status] ?? map.Running;
@@ -538,11 +538,11 @@ function AlertBanner({
   kind,
   text,
 }: {
-  kind: 'info' | 'success' | 'warning' | 'error';
+  kind: 'secondary' | 'success' | 'warning' | 'error';
   text: string;
 }) {
   const map = {
-    info: {
+    secondary: {
       bg: 'rgb(var(--ds-secondary))',
       fg: 'rgb(var(--ds-secondary-foreground))',
       glyph: '●',
@@ -553,8 +553,8 @@ function AlertBanner({
       glyph: '✓',
     },
     warning: {
-      bg: 'rgb(var(--ds-muted))',
-      fg: 'rgb(var(--ds-foreground))',
+      bg: 'rgb(var(--ds-warning))',
+      fg: 'rgb(var(--ds-warning-foreground))',
       glyph: '▸',
     },
     error: {

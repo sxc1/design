@@ -5,7 +5,15 @@ export interface SemanticRoleDescriptor {
   label: string;
   description: string;
   pairedWith?: SemanticRoleId;
-  group: 'surface' | 'primary' | 'secondary' | 'muted' | 'accent' | 'destructive' | 'utility';
+  group:
+    | 'surface'
+    | 'primary'
+    | 'secondary'
+    | 'muted'
+    | 'accent'
+    | 'destructive'
+    | 'warning'
+    | 'utility';
 }
 
 export const SEMANTIC_ROLES: SemanticRoleDescriptor[] = [
@@ -108,6 +116,20 @@ export const SEMANTIC_ROLES: SemanticRoleDescriptor[] = [
     group: 'destructive',
   },
   {
+    id: 'warning',
+    label: 'Warning',
+    description: 'Warning / caution surface.',
+    pairedWith: 'warning-foreground',
+    group: 'warning',
+  },
+  {
+    id: 'warning-foreground',
+    label: 'Warning Foreground',
+    description: 'Text on warning surfaces.',
+    pairedWith: 'warning',
+    group: 'warning',
+  },
+  {
     id: 'border',
     label: 'Border',
     description: 'Standard border color.',
@@ -134,5 +156,6 @@ export const SEMANTIC_GROUP_LABELS: Record<SemanticRoleDescriptor['group'], stri
   muted: 'Muted',
   accent: 'Accent',
   destructive: 'Destructive',
+  warning: 'Warning',
   utility: 'Utility',
 };

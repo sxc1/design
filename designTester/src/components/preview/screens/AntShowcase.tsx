@@ -453,8 +453,8 @@ function StatusTag({ status }: { status: string }) {
       fg: 'rgb(var(--ds-accent-foreground))',
     },
     Degraded: {
-      bg: 'rgb(var(--ds-secondary))',
-      fg: 'rgb(var(--ds-secondary-foreground))',
+      bg: 'rgb(var(--ds-warning))',
+      fg: 'rgb(var(--ds-warning-foreground))',
     },
     Stopped: {
       bg: 'rgb(var(--ds-destructive))',
@@ -657,8 +657,8 @@ function AlertBanner({
 }) {
   const map = {
     info: {
-      bg: 'rgb(var(--ds-secondary))',
-      fg: 'rgb(var(--ds-secondary-foreground))',
+      bg: 'rgb(var(--ds-warning))',
+      fg: 'rgb(var(--ds-warning-foreground))',
       glyph: '●',
     },
     success: {
@@ -667,8 +667,8 @@ function AlertBanner({
       glyph: '✓',
     },
     warning: {
-      bg: 'rgb(var(--ds-muted))',
-      fg: 'rgb(var(--ds-foreground))',
+      bg: 'rgb(var(--ds-warning))',
+      fg: 'rgb(var(--ds-warning-foreground))',
       glyph: '▸',
     },
     error: {

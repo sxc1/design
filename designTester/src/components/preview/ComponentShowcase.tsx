@@ -9,6 +9,7 @@ export function ComponentShowcase() {
           <PreviewButton tone="primary">Primary</PreviewButton>
           <PreviewButton tone="secondary">Secondary</PreviewButton>
           <PreviewButton tone="accent">Accent</PreviewButton>
+          <PreviewButton tone="warning">Warning</PreviewButton>
           <PreviewButton tone="destructive">Destructive</PreviewButton>
           <PreviewButton tone="ghost">Ghost</PreviewButton>
         </div>
@@ -51,6 +52,7 @@ export function ComponentShowcase() {
           <Badge tone="secondary">Secondary</Badge>
           <Badge tone="muted">Muted</Badge>
           <Badge tone="accent">Accent</Badge>
+          <Badge tone="warning">Warning</Badge>
           <Badge tone="destructive">Destructive</Badge>
         </div>
       </Card>
@@ -178,7 +180,13 @@ function Card({ title, children }: { title: string; children: React.ReactNode })
   );
 }
 
-type ButtonTone = 'primary' | 'secondary' | 'accent' | 'destructive' | 'ghost';
+type ButtonTone =
+  | 'primary'
+  | 'secondary'
+  | 'accent'
+  | 'warning'
+  | 'destructive'
+  | 'ghost';
 
 function PreviewButton({
   tone,
@@ -207,6 +215,12 @@ function PreviewButton({
           color: 'rgb(var(--ds-accent-foreground))',
           border: '1px solid transparent',
         };
+      case 'warning':
+        return {
+          background: 'rgb(var(--ds-warning))',
+          color: 'rgb(var(--ds-warning-foreground))',
+          border: '1px solid transparent',
+        };
       case 'destructive':
         return {
           background: 'rgb(var(--ds-destructive))',
@@ -233,7 +247,13 @@ function PreviewButton({
   );
 }
 
-type BadgeTone = 'primary' | 'secondary' | 'muted' | 'accent' | 'destructive';
+type BadgeTone =
+  | 'primary'
+  | 'secondary'
+  | 'muted'
+  | 'accent'
+  | 'warning'
+  | 'destructive';
 
 function Badge({ tone, children }: { tone: BadgeTone; children: React.ReactNode }) {
   const style = {
@@ -252,6 +272,10 @@ function Badge({ tone, children }: { tone: BadgeTone; children: React.ReactNode 
     accent: {
       background: 'rgb(var(--ds-accent))',
       color: 'rgb(var(--ds-accent-foreground))',
+    },
+    warning: {
+      background: 'rgb(var(--ds-warning))',
+      color: 'rgb(var(--ds-warning-foreground))',
     },
     destructive: {
       background: 'rgb(var(--ds-destructive))',

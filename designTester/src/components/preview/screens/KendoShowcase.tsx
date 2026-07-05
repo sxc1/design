@@ -694,9 +694,9 @@ const SWATCHES = [
   'var(--ds-primary)',
   'var(--ds-secondary)',
   'var(--ds-accent)',
+  'var(--ds-warning)',
   'var(--ds-destructive)',
   'var(--ds-muted)',
-  'var(--ds-foreground)',
 ];
 
 function KColorPicker() {

@@ -36,6 +36,8 @@ export type SemanticRoleId =
   | 'accent-foreground'
   | 'destructive'
   | 'destructive-foreground'
+  | 'warning'
+  | 'warning-foreground'
   | 'border'
   | 'input'
   | 'ring';
