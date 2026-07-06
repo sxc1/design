@@ -200,16 +200,6 @@ function buildDataFromSpecs(
   return { light: build(lightSpecs), dark: build(darkSpecs) };
 }
 
-// A sensible default reference for a newly added data slot: cycle through the
-// dark rainbow set, falling back to the first available palette (or unassigned).
-function defaultDataRef(palettes: PrimitivePalette[], index: number): DataReference {
-  const spec = DATA_DARK_SPECS[index % DATA_DARK_SPECS.length];
-  const named = palettes.find((p) => p.name === spec.name);
-  if (named) return ref(named.id, spec.shade);
-  const first = palettes[0];
-  return first ? ref(first.id, 500) : null;
-}
-
 function buildDefaultSemantics(palettes: PrimitivePalette[]): {
   light: SemanticMap;
   dark: SemanticMap;
@@ -297,10 +287,18 @@ function mergePresetPalettes(
   };
 }
 
+// SXC1's 5th/6th (optional) data series borrow the Carbon cyan/magenta
+// swatches used by data-5/data-6 in light mode; see FINAL.md.
+const SXC1_LIGHT_DATA_EXTRAS = BASIC_CARBON_DATA_PALETTE_DEFS.filter((d) =>
+  ['cds-cyan', 'cds-magenta'].includes(d.name),
+);
+
 function buildSxc1State(prev: TokenState): TokenState {
   const { palettes, byName } = mergePresetPalettes(prev.palettes, [
     ...BASIC_NEUTRAL_PRESET,
     ...SXC1_PRESET,
+    ...SXC1_LIGHT_DATA_EXTRAS,
+    { name: 'destructive', baseColor: '#ef4444' },
   ]);
   const brand = byName.get(SXC1_SEMANTIC_PICKS.brand)!;
   const neutral = byName.get(SXC1_SEMANTIC_PICKS.neutral)!;
@@ -311,6 +309,7 @@ function buildSxc1State(prev: TokenState): TokenState {
   const sxc1Foreground = byName.get('inkBlack') ?? neutral;
   const sxc1Secondary = byName.get('inkBlack') ?? neutral;
   const sxc1Destructive = byName.get('strawberryRed') ?? destructive;
+  const sxc1DarkDestructive = byName.get('destructive') ?? sxc1Destructive;
   const sxc1Warning = byName.get('amberOrange') ?? destructive;
   const sxc1PrimaryAlt = byName.get('exp-7') ?? brand;
 
@@ -345,19 +344,57 @@ function buildSxc1State(prev: TokenState): TokenState {
     card: ref(surfaceNeutral.id, 900),
     'card-foreground': ref(surfaceNeutral.id, 50),
     primary: ref(sxc1Primary.id, 400),
+    'primary-foreground': ref(sxc1Foreground.id, 950),
     'primary-alt': ref(sxc1PrimaryAlt.id, 'base'),
     secondary: ref(sxc1Secondary.id, 800),
     'secondary-foreground': ref(sxc1Secondary.id, 50),
+    muted: ref(surfaceNeutral.id, 800),
+    'muted-foreground': ref(sxc1Foreground.id, 300),
+    accent: ref(sxc1Primary.id, 800),
+    'accent-foreground': ref(sxc1Foreground.id, 100),
+    destructive: ref(sxc1DarkDestructive.id, 600),
+    'destructive-foreground': ref(sxc1Foreground.id, 50),
     warning: ref(sxc1Warning.id, 'base'),
     'warning-foreground': ref(sxc1Foreground.id, 950),
+    border: ref(sxc1Foreground.id, 800),
+    input: ref(sxc1Foreground.id, 800),
+    ring: ref(sxc1Primary.id, 400),
   };
 
   return {
     ...prev,
     palettes,
     semantic,
-    data: buildDefaultData(byName),
+    data: buildSxc1Data(byName),
   };
+}
+
+// SXC1's optional 5th/6th data series, confirmed in-app:
+// - dark: rainbow-peach.400 for series 5; series 6 still TBD, left unassigned.
+// - light: cds-cyan.600 for series 5, cds-magenta.400 for series 6.
+// Both modes are padded to the same slot count — see FINAL.md.
+function buildSxc1Data(byName: Map<string, PrimitivePalette>): {
+  light: DataReference[];
+  dark: DataReference[];
+} {
+  const data = buildDefaultData(byName);
+  const rainbowPeach = byName.get('rainbow-peach');
+  const cdsCyan = byName.get('cds-cyan');
+  const cdsMagenta = byName.get('cds-magenta');
+  const turquoise = byName.get('turquoise');
+
+  data.dark = [
+    ...data.dark,
+    rainbowPeach ? ref(rainbowPeach.id, 400) : null,
+    turquoise ? ref(turquoise.id, 400) : null,
+  ];
+  data.light = [
+    ...data.light,
+    cdsCyan ? ref(cdsCyan.id, 600) : null,
+    cdsMagenta ? ref(cdsMagenta.id, 400) : null,
+  ];
+
+  return data;
 }
 
 function buildExpState(prev: TokenState): TokenState {
@@ -574,11 +611,10 @@ export const useTokenStore = create<TokenStore>()(
       addDataColor: () =>
         set((state) => {
           if (state.data.light.length >= MAX_DATA_COLORS) return {};
-          const next = defaultDataRef(state.palettes, state.data.light.length);
           return {
             data: {
-              light: [...state.data.light, next],
-              dark: [...state.data.dark, next ? { ...next } : null],
+              light: [...state.data.light, null],
+              dark: [...state.data.dark, null],
             },
           };
         }),
@@ -712,11 +748,15 @@ export const useTokenStore = create<TokenStore>()(
     }),
     {
       name: 'design-token-selector',
-      version: 7,
+      version: 9,
       // v2 sorts palettes by color; v3 introduced the qualitative data palette;
       // v4 gives it distinct light/dark defaults; v5 adds the Warning semantic
       // set; v6 adds Primary Alternate; v7 corrects primary-alt shades and
-      // pins dark primary to exp-9.400 for SXC1/EXP themes.
+      // pins dark primary to exp-9.400 for SXC1/EXP themes; v8 fills in the
+      // remaining SXC1 dark-mode roles (primary-foreground, muted, accent,
+      // destructive, border/input, ring) per the finalized picks in FINAL.md;
+      // v9 adds SXC1's optional data-5/data-6 (light: cds-cyan.600 /
+      // cds-magenta.400; dark: rainbow-peach.400 / TBD).
       migrate: (persisted, version) => {
         const state = persisted as Partial<TokenState> | undefined;
         if (state) {
@@ -807,6 +847,83 @@ export const useTokenStore = create<TokenStore>()(
                 if (exp9) {
                   darkMap.primary = { paletteId: exp9.id, shade: 400 };
                 }
+              }
+            }
+          }
+          // v8: fill in the remaining SXC1 dark-mode roles that were left
+          // pointing at generic (non-SXC1) defaults — detected by the light
+          // map already using exp-9/strawberryRed, so Basic/EXP sessions are
+          // left untouched.
+          if (version < 8 && state.semantic?.light && state.semantic?.dark) {
+            const existing = Array.isArray(state.palettes) ? state.palettes : [];
+            const inkBlack = existing.find((p) => p.name === 'inkBlack');
+            const exp9 = existing.find((p) => p.name === 'exp-9');
+            const strawberryRed = existing.find((p) => p.name === 'strawberryRed');
+            const neutral = existing.find((p) => p.name === 'neutral');
+            const lightMap = state.semantic.light;
+            const isSxc1 =
+              inkBlack &&
+              exp9 &&
+              strawberryRed &&
+              lightMap.primary?.paletteId === exp9.id &&
+              lightMap.destructive?.paletteId === strawberryRed.id;
+            if (isSxc1) {
+              const darkMap = state.semantic.dark;
+              darkMap['primary-foreground'] = { paletteId: inkBlack.id, shade: 950 };
+              if (neutral) darkMap.muted = { paletteId: neutral.id, shade: 800 };
+              darkMap['muted-foreground'] = { paletteId: inkBlack.id, shade: 300 };
+              darkMap.accent = { paletteId: exp9.id, shade: 800 };
+              darkMap['accent-foreground'] = { paletteId: inkBlack.id, shade: 100 };
+              darkMap.destructive = { paletteId: strawberryRed.id, shade: 600 };
+              darkMap['destructive-foreground'] = { paletteId: inkBlack.id, shade: 50 };
+              darkMap.border = { paletteId: inkBlack.id, shade: 800 };
+              darkMap.input = { paletteId: inkBlack.id, shade: 800 };
+              darkMap.ring = { paletteId: exp9.id, shade: 400 };
+              // Fix dark destructive: should be `destructive` palette, not `strawberryRed`.
+              const genericDestructive = existing.find((p) => p.name === 'destructive');
+              if (genericDestructive) {
+                darkMap.destructive = { paletteId: genericDestructive.id, shade: 600 };
+              }
+            }
+          }
+          // v9: SXC1's optional data-5/data-6, confirmed in-app — light gets
+          // cds-cyan.600 / cds-magenta.400, dark gets rainbow-peach.400 for
+          // series 5 (series 6 still TBD, left unassigned). Only extends
+          // sessions below 6 slots, so any manual edit is left alone.
+          if (version < 9) {
+            const existing = Array.isArray(state.palettes) ? state.palettes : [];
+            const exp9 = existing.find((p) => p.name === 'exp-9');
+            const strawberryRed = existing.find((p) => p.name === 'strawberryRed');
+            const rainbowPeach = existing.find((p) => p.name === 'rainbow-peach');
+            const cdsCyan = existing.find((p) => p.name === 'cds-cyan');
+            const cdsMagenta = existing.find((p) => p.name === 'cds-magenta');
+            const lightMap = state.semantic?.light;
+            const isSxc1 =
+              exp9 &&
+              strawberryRed &&
+              lightMap?.primary?.paletteId === exp9.id &&
+              lightMap?.destructive?.paletteId === strawberryRed.id;
+            if (isSxc1 && state.data) {
+              while (Array.isArray(state.data.light) && state.data.light.length < 6) {
+                const idx = state.data.light.length;
+                const extra: DataReference =
+                  idx === 4 && cdsCyan
+                    ? { paletteId: cdsCyan.id, shade: 600 }
+                    : idx === 5 && cdsMagenta
+                      ? { paletteId: cdsMagenta.id, shade: 400 }
+                      : null;
+                state.data.light = [...state.data.light, extra];
+              }
+              const turquoise = existing.find((p) => p.name === 'turquoise');
+              while (Array.isArray(state.data.dark) && state.data.dark.length < 6) {
+                const idx = state.data.dark.length;
+                const extra: DataReference =
+                  idx === 4 && rainbowPeach
+                    ? { paletteId: rainbowPeach.id, shade: 400 }
+                    : idx === 5 && turquoise
+                      ? { paletteId: turquoise.id, shade: 400 }
+                      : null;
+                state.data.dark = [...state.data.dark, extra];
               }
             }
           }

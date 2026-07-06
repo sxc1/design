@@ -18,7 +18,8 @@ export function AppShell() {
   const clearAll = useTokenStore((s) => s.clearAll);
   const loadBasicPreset = useTokenStore((s) => s.loadBasicPreset);
   const loadSxc1Preset = useTokenStore((s) => s.loadSxc1Preset);
-  const loadExpPreset = useTokenStore((s) => s.loadExpPreset);
+  // Disabled due to finalization of the sxc1 theme.
+  // const loadExpPreset = useTokenStore((s) => s.loadExpPreset);
   const importFromCss = useTokenStore((s) => s.importFromCss);
   const previewScreen = useTokenStore((s) => s.previewScreen);
   const ActiveScreen = getScreen(previewScreen).component;
@@ -118,9 +119,11 @@ export function AppShell() {
             <Button variant="ghost" size="sm" onClick={loadBasicPreset}>
               Basic
             </Button>
+            {/* Disabled due to finalization of the sxc1 theme.
             <Button variant="ghost" size="sm" onClick={loadExpPreset}>
               Exp
             </Button>
+            */}
             <Button variant="ghost" size="sm" onClick={loadSxc1Preset}>
               sxc1
             </Button>
